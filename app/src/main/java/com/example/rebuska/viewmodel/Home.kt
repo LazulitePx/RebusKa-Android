@@ -58,7 +58,7 @@ fun HomeScreen(
             BottomNavBar(
                 seleccionado = NavDestino.HOME,
                 onHome   = {},
-                onChats  = onChats,
+                onChats  = onChats,   // 🔥 importante
                 onLogo   = onLogin,
                 onPerfil = onPerfil,
                 onMenu   = {}

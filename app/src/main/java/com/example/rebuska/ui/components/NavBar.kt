@@ -1,4 +1,4 @@
-package com.example.rebuska.ui.components
+    package com.example.rebuska.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,9 +32,7 @@ fun BottomNavBar(
     NavigationBar(
         containerColor = Color.White,
         tonalElevation = 0.dp,
-        modifier = Modifier
-            .border(1.dp, DividerColor, RoundedCornerShape(0.dp))
-            .height(70.dp)
+
     ) {
         NavigationBarItem(
             selected = seleccionado == NavDestino.HOME,

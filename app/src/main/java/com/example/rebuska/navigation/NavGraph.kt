@@ -16,6 +16,8 @@ import com.example.rebuska.ui.screens.VerificacionEmailScreen
 import com.example.rebuska.ui.screens.VerificacionTelefonoScreen
 import com.example.rebuska.ui.screens.HomeScreen
 import com.example.rebuska.ui.screens.TiendaScreen
+import com.example.rebuska.ui.screens.mensajes.ChatScreen
+import com.example.rebuska.ui.screens.mensajes.MensajesScreen
 
 object Rutas {
     const val SPLASH               = "splash"
@@ -27,6 +29,9 @@ object Rutas {
     const val VERIFICACION_EMAIL   = "verificacion_email"
     const val VERIFICACION_TELEFONO = "verificacion_telefono"
     const val TIENDA = "tienda/{idNegocio}"
+    const val MENSAJES = "mensajes"
+    const val CHAT = "chat/{nombre}"
+
 
     // Función helper
     fun tiendaRuta(id: Int) = "tienda/$id"
@@ -134,6 +139,10 @@ fun AppNavigation(
                     navController.navigate(Rutas.LOGIN) {
                         popUpTo(Rutas.HOME) { inclusive = true }
                     }
+                },
+                onChats = {
+                    navController.navigate(Rutas.MENSAJES)
+
                 }
             )
         }
@@ -152,6 +161,24 @@ fun AppNavigation(
                 onHome    = { navController.navigate(Rutas.HOME) },
                 onChats   = { navController.navigate(Rutas.LOGIN) },
                 onPerfil  = { navController.navigate(Rutas.LOGIN) }
+            )
+        }
+        composable(Rutas.MENSAJES) {
+            MensajesScreen(navController)
+        }
+
+        composable(
+            route = Rutas.CHAT,
+            arguments = listOf(
+                navArgument("nombre") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+
+            val nombre = backStackEntry.arguments?.getString("nombre") ?: ""
+
+            ChatScreen(
+                nombre = nombre,
+                onBack = { navController.popBackStack() }
             )
         }
 
