@@ -18,6 +18,8 @@ import com.example.rebuska.ui.screens.HomeScreen
 import com.example.rebuska.ui.screens.TiendaScreen
 import com.example.rebuska.ui.screens.mensajes.ChatScreen
 import com.example.rebuska.ui.screens.mensajes.MensajesScreen
+import com.example.rebuska.ui.screens.perfil.ProfileScreenEdit
+import com.example.rebuska.ui.screens.perfil.ProfileScreen
 
 object Rutas {
     const val SPLASH               = "splash"
@@ -31,10 +33,13 @@ object Rutas {
     const val TIENDA = "tienda/{idNegocio}"
     const val MENSAJES = "mensajes"
     const val CHAT = "chat/{nombre}"
+    const val PERFIL = "perfil"
+    const val EMPRESA = "empresa/{id}"
 
 
     // Función helper
     fun tiendaRuta(id: Int) = "tienda/$id"
+    fun empresaRuta(id: Int) = "empresa/$id"
 }
 
 @Composable
@@ -143,6 +148,9 @@ fun AppNavigation(
                 onChats = {
                     navController.navigate(Rutas.MENSAJES)
 
+                },
+                onPerfil = {
+                    navController.navigate(Rutas.PERFIL)
                 }
             )
         }
@@ -160,7 +168,8 @@ fun AppNavigation(
                 onAtras   = { navController.popBackStack() },
                 onHome    = { navController.navigate(Rutas.HOME) },
                 onChats   = { navController.navigate(Rutas.LOGIN) },
-                onPerfil  = { navController.navigate(Rutas.LOGIN) }
+                onPerfil  = { navController.navigate(Rutas.PERFIL) }
+
             )
         }
         composable(Rutas.MENSAJES) {
@@ -180,6 +189,21 @@ fun AppNavigation(
                 nombre = nombre,
                 onBack = { navController.popBackStack() }
             )
+        }
+        //ruta de perfil
+        composable(Rutas.PERFIL) {
+            ProfileScreen(navController)
+        }
+        //ruta editar perfil
+        composable(
+            route = Rutas.EMPRESA,
+            arguments = listOf(
+                navArgument("id") { type = NavType.IntType }
+            )
+        ){ backStackEntry ->
+            val empresaId = backStackEntry.arguments?.getInt("id") ?: 0
+            ProfileScreenEdit(navController, empresaId)
+
         }
 
     }

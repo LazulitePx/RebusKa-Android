@@ -1,10 +1,8 @@
-    package com.example.rebuska.ui.components
+package com.example.rebuska.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,6 +70,7 @@ fun BottomNavBar(
             label = { Text("") },
             colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
         )
+        // Perfil
         NavigationBarItem(
             selected = seleccionado == NavDestino.PERFIL,
             onClick = onPerfil,
@@ -82,6 +81,7 @@ fun BottomNavBar(
                 unselectedIconColor = Color(0xFFAAAAAA), indicatorColor = BlueLight
             )
         )
+
         NavigationBarItem(
             selected = seleccionado == NavDestino.MENU,
             onClick = onMenu,
