@@ -1,16 +1,36 @@
-package com.example.rebuska.ui.screens
+package com.example.rebuska.ui.screens.login
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,15 +46,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.firestore.FirebaseFirestore
 import com.example.rebuska.R
-import com.example.rebuska.ui.theme.*
+import com.example.rebuska.ui.theme.Blue400
+import com.example.rebuska.ui.theme.Blue700
+import com.example.rebuska.ui.theme.Blue800
+import com.example.rebuska.ui.theme.BlueBorder
+import com.example.rebuska.ui.theme.DividerColor
+import com.example.rebuska.ui.theme.Nunito
+import com.example.rebuska.ui.theme.TextMuted
+import com.example.rebuska.ui.theme.TextPrimary
 
 @Composable
 fun Registro2Screen(
-    onCrearCuenta: () -> Unit = {},
+    onCrearCuenta: (cedula: String, celular: String, password: String) -> Unit = { _, _, _ -> },
+    cargando: Boolean = false,
+    errorMsg: String? = null,
     onIniciarSesion: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
@@ -73,20 +104,20 @@ fun Registro2Screen(
     val contentOffset = remember { Animatable(30f) }
 
     LaunchedEffect(Unit) {
-        contentAlpha.animateTo(1f,  animationSpec = tween(600))
+        contentAlpha.animateTo(1f, animationSpec = tween(600))
         contentOffset.animateTo(0f, animationSpec = tween(600))
     }
 
     Box(
-        modifier = Modifier
+        modifier = Modifier.Companion
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color.Companion.White)
     ) {
         Column(
-            modifier = Modifier
+            modifier = Modifier.Companion
                 .fillMaxSize()
                 .graphicsLayer {
-                    alpha        = contentAlpha.value
+                    alpha = contentAlpha.value
                     translationY = contentOffset.value
                 }
         ) {
@@ -95,7 +126,7 @@ fun Registro2Screen(
             // HEADER CON OLA Y STEPPER
             // ══════════════════════════════════════════
             Box(
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .fillMaxWidth()
                     .height(140.dp)
                     .drawBehind {
@@ -103,117 +134,117 @@ fun Registro2Screen(
                             moveTo(0f, size.height * 0.8f)
                             quadraticBezierTo(
                                 size.width * 0.25f, size.height,
-                                size.width * 0.5f,  size.height * 0.85f
+                                size.width * 0.5f, size.height * 0.85f
                             )
                             quadraticBezierTo(
                                 size.width * 0.75f, size.height * 0.7f,
-                                size.width,         size.height * 0.85f
+                                size.width, size.height * 0.85f
                             )
                             lineTo(size.width, 0f)
                             lineTo(0f, 0f)
                             close()
                         }
                         drawPath(
-                            path  = path,
-                            brush = Brush.linearGradient(
+                            path = path,
+                            brush = Brush.Companion.linearGradient(
                                 colors = listOf(Blue800, Blue700, Blue400),
-                                start  = Offset(0f, 0f),
-                                end    = Offset(size.width, size.height)
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, size.height)
                             )
                         )
                     }
             ) {
                 Row(
-                    modifier = Modifier
+                    modifier = Modifier.Companion
                         .fillMaxWidth()
                         .padding(start = 16.dp, end = 16.dp, top = 48.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Companion.CenterVertically
                 ) {
                     // Botón atrás
                     Box(
-                        modifier = Modifier
+                        modifier = Modifier.Companion
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.18f))
+                            .background(Color.Companion.White.copy(alpha = 0.18f))
                             .clickable { onBack() },
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Companion.Center
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
                             contentDescription = "Atrás",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
+                            tint = Color.Companion.White,
+                            modifier = Modifier.Companion.size(18.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.Companion.width(12.dp))
 
                     // Stepper
                     Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.Companion.weight(1f),
+                        verticalAlignment = Alignment.Companion.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
                         // Paso 1 - Completado
                         Box(
-                            modifier = Modifier
+                            modifier = Modifier.Companion
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color.White),
-                            contentAlignment = Alignment.Center
+                                .background(Color.Companion.White),
+                            contentAlignment = Alignment.Companion.Center
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_check),
                                 contentDescription = null,
                                 tint = Blue800,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.Companion.size(14.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.Companion.width(6.dp))
                         Text(
                             text = "Personal",
                             fontFamily = Nunito,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Companion.Bold,
                             fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.85f)
+                            color = Color.Companion.White.copy(alpha = 0.85f)
                         )
 
                         // Línea conectora completada
                         Box(
-                            modifier = Modifier
+                            modifier = Modifier.Companion
                                 .padding(horizontal = 10.dp)
                                 .weight(1f)
                                 .height(2.dp)
-                                .background(Color.White.copy(alpha = 0.8f))
+                                .background(Color.Companion.White.copy(alpha = 0.8f))
                         )
 
                         // Paso 2 - Activo
                         Box(
-                            modifier = Modifier
+                            modifier = Modifier.Companion
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color.White),
-                            contentAlignment = Alignment.Center
+                                .background(Color.Companion.White),
+                            contentAlignment = Alignment.Companion.Center
                         ) {
                             Text(
                                 text = "2",
                                 fontFamily = Nunito,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.Companion.ExtraBold,
                                 fontSize = 12.sp,
                                 color = Blue800
                             )
                         }
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.Companion.width(6.dp))
                         Text(
                             text = "Cuenta",
                             fontFamily = Nunito,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Companion.Bold,
                             fontSize = 12.sp,
-                            color = Color.White
+                            color = Color.Companion.White
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(36.dp))
+                    Spacer(modifier = Modifier.Companion.width(36.dp))
                 }
             }
 
@@ -221,86 +252,90 @@ fun Registro2Screen(
             // CONTENIDO
             // ══════════════════════════════════════════
             Column(
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(Color.Companion.White)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.Companion.height(24.dp))
 
                 Text(
                     text = "Casi",
                     fontFamily = Nunito,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Companion.ExtraBold,
                     fontSize = 26.sp,
                     color = TextPrimary
                 )
                 Text(
                     text = "Terminamos",
                     fontFamily = Nunito,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Companion.ExtraBold,
                     fontSize = 24.sp,
                     color = Blue800
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.Companion.height(4.dp))
                 Text(
                     text = "Solo un paso más...",
                     fontFamily = Nunito,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Companion.SemiBold,
                     fontSize = 13.sp,
                     color = TextMuted
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.Companion.height(24.dp))
 
                 // Cédula
                 OutlinedTextField(
                     value = cedula,
                     onValueChange = { cedula = it },
                     placeholder = {
-                        Text("Número de cédula", fontFamily = Nunito,
-                            fontWeight = FontWeight.SemiBold, color = TextMuted)
+                        Text(
+                            "Número de cédula", fontFamily = Nunito,
+                            fontWeight = FontWeight.Companion.SemiBold, color = TextMuted
+                        )
                     },
                     trailingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.ic_id_card),
                             contentDescription = null,
                             tint = TextMuted,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.Companion.size(20.dp)
                         )
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Number),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.Companion.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor      = Blue800,
-                        unfocusedBorderColor    = BlueBorder,
-                        focusedContainerColor   = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor             = Blue800
+                        focusedBorderColor = Blue800,
+                        unfocusedBorderColor = BlueBorder,
+                        focusedContainerColor = Color.Companion.White,
+                        unfocusedContainerColor = Color.Companion.White,
+                        cursorColor = Blue800
                     )
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.Companion.height(14.dp))
 
                 // Celular con prefijo
                 OutlinedTextField(
                     value = celular,
                     onValueChange = { celular = it },
                     placeholder = {
-                        Text("Número de celular", fontFamily = Nunito,
-                            fontWeight = FontWeight.SemiBold, color = TextMuted)
+                        Text(
+                            "Número de celular", fontFamily = Nunito,
+                            fontWeight = FontWeight.Companion.SemiBold, color = TextMuted
+                        )
                     },
                     leadingIcon = {
                         Text(
                             text = "🇨🇴 +57",
                             fontFamily = Nunito,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Companion.Bold,
                             fontSize = 13.sp,
                             color = TextPrimary,
-                            modifier = Modifier.padding(start = 4.dp)
+                            modifier = Modifier.Companion.padding(start = 4.dp)
                         )
                     },
                     trailingIcon = {
@@ -308,40 +343,42 @@ fun Registro2Screen(
                             painter = painterResource(R.drawable.ic_phone),
                             contentDescription = null,
                             tint = TextMuted,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.Companion.size(20.dp)
                         )
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Phone),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.Companion.fillMaxWidth(),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor      = Blue800,
-                        unfocusedBorderColor    = BlueBorder,
-                        focusedContainerColor   = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor             = Blue800
+                        focusedBorderColor = Blue800,
+                        unfocusedBorderColor = BlueBorder,
+                        focusedContainerColor = Color.Companion.White,
+                        unfocusedContainerColor = Color.Companion.White,
+                        cursorColor = Blue800
                     )
                 )
 
                 Text(
                     text = "Lo usaremos para verificar tu cuenta",
                     fontFamily = Nunito,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Companion.SemiBold,
                     fontSize = 11.sp,
                     color = TextMuted,
-                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                    modifier = Modifier.Companion.padding(start = 4.dp, top = 4.dp)
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.Companion.height(14.dp))
 
                 // Contraseña
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     placeholder = {
-                        Text("Contraseña", fontFamily = Nunito,
-                            fontWeight = FontWeight.SemiBold, color = TextMuted)
+                        Text(
+                            "Contraseña", fontFamily = Nunito,
+                            fontWeight = FontWeight.Companion.SemiBold, color = TextMuted
+                        )
                     },
                     trailingIcon = {
                         IconButton(onClick = { passVisible = !passVisible }) {
@@ -352,34 +389,36 @@ fun Registro2Screen(
                                 ),
                                 contentDescription = null,
                                 tint = TextMuted,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.Companion.size(20.dp)
                             )
                         }
                     },
-                    visualTransformation = if (passVisible) VisualTransformation.None
+                    visualTransformation = if (passVisible) VisualTransformation.Companion.None
                     else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Password),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.Companion.fillMaxWidth(),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor      = Blue800,
-                        unfocusedBorderColor    = BlueBorder,
-                        focusedContainerColor   = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor             = Blue800
+                        focusedBorderColor = Blue800,
+                        unfocusedBorderColor = BlueBorder,
+                        focusedContainerColor = Color.Companion.White,
+                        unfocusedContainerColor = Color.Companion.White,
+                        cursorColor = Blue800
                     )
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.Companion.height(14.dp))
 
                 // Confirmar contraseña
                 OutlinedTextField(
                     value = confirmarPassword,
                     onValueChange = { confirmarPassword = it },
                     placeholder = {
-                        Text("Confirmar contraseña", fontFamily = Nunito,
-                            fontWeight = FontWeight.SemiBold, color = TextMuted)
+                        Text(
+                            "Confirmar contraseña", fontFamily = Nunito,
+                            fontWeight = FontWeight.Companion.SemiBold, color = TextMuted
+                        )
                     },
                     trailingIcon = {
                         IconButton(onClick = { confirmVisible = !confirmVisible }) {
@@ -390,38 +429,38 @@ fun Registro2Screen(
                                 ),
                                 contentDescription = null,
                                 tint = TextMuted,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.Companion.size(20.dp)
                             )
                         }
                     },
-                    visualTransformation = if (confirmVisible) VisualTransformation.None
+                    visualTransformation = if (confirmVisible) VisualTransformation.Companion.None
                     else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Password),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.Companion.fillMaxWidth(),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor      = Blue800,
-                        unfocusedBorderColor    = BlueBorder,
-                        focusedContainerColor   = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor             = Blue800
+                        focusedBorderColor = Blue800,
+                        unfocusedBorderColor = BlueBorder,
+                        focusedContainerColor = Color.Companion.White,
+                        unfocusedContainerColor = Color.Companion.White,
+                        cursorColor = Blue800
                     )
                 )
 
                 // Barra de fortaleza
                 if (password.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.Companion.height(8.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.Companion.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         repeat(4) { index ->
                             Box(
-                                modifier = Modifier
+                                modifier = Modifier.Companion
                                     .weight(1f)
                                     .height(3.dp)
-                                    .clip(RoundedCornerShape(2.dp))
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
                                     .background(
                                         if (index < passwordStrength) strengthColor
                                         else DividerColor
@@ -432,21 +471,24 @@ fun Registro2Screen(
                     Text(
                         text = strengthLabel,
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Companion.Bold,
                         fontSize = 11.sp,
                         color = strengthColor,
-                        modifier = Modifier
+                        modifier = Modifier.Companion
                             .fillMaxWidth()
                             .padding(top = 4.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                        textAlign = TextAlign.End
                     )
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.Companion.height(28.dp))
 
                 // Botón Crear cuenta (verde)
                 Button(
-                    onClick = { onCrearCuenta() },
+                    onClick = {
+                        onCrearCuenta(cedula, celular, password)
+                    },
+                    enabled = !cargando,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
@@ -455,43 +497,43 @@ fun Registro2Screen(
                     Icon(
                         painter = painterResource(R.drawable.ic_check),
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        tint = Color.Companion.White,
+                        modifier = Modifier.Companion.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.Companion.width(8.dp))
                     Text(
                         text = "Crear cuenta",
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Companion.ExtraBold,
                         fontSize = 15.sp,
-                        color = Color.White
+                        color = Color.Companion.White
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.Companion.height(24.dp))
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.Companion.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Companion.CenterVertically
                 ) {
                     Text(
                         text = "¿Ya tienes una cuenta? ",
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Companion.SemiBold,
                         fontSize = 13.sp,
                         color = TextMuted
                     )
                     Text(
                         text = "Iniciar sesión",
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Companion.ExtraBold,
                         fontSize = 13.sp,
                         color = Blue800
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.Companion.height(24.dp))
             }
         }
     }

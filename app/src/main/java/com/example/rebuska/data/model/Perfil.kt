@@ -1,5 +1,7 @@
 package com.example.rebuska.data.model
 
+import com.example.rebuska.data.model.Negocio
+
 data class Perfil (
 
     // logica mas adelante

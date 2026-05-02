@@ -1,21 +1,48 @@
-package com.example.rebuska.ui.screens
+package com.example.rebuska.ui.screens.login
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,19 +50,23 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rebuska.R
-import com.example.rebuska.ui.theme.*
+import com.example.rebuska.ui.theme.Blue400
+import com.example.rebuska.ui.theme.Blue700
+import com.example.rebuska.ui.theme.Blue800
+import com.example.rebuska.ui.theme.BlueBorder
+import com.example.rebuska.ui.theme.DividerColor
+import com.example.rebuska.ui.theme.Nunito
+import com.example.rebuska.ui.theme.TextMuted
+import com.example.rebuska.ui.theme.TextPrimary
 
 @Composable
 fun LoginScreen(
-    onLoginExitoso: () -> Unit = {},
+    onLoginExitoso: (email: String, password: String) -> Unit = { _, _ -> },
+    cargando: Boolean = false,
+    errorMsg: String? = null,
     onRegistrarse: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
@@ -47,21 +78,21 @@ fun LoginScreen(
     val contentOffset = remember { Animatable(30f) }
 
     LaunchedEffect(Unit) {
-        contentAlpha.animateTo(1f,  animationSpec = tween(600))
+        contentAlpha.animateTo(1f, animationSpec = tween(600))
         contentOffset.animateTo(0f, animationSpec = tween(600))
     }
 
     Box(
-        modifier = Modifier
+        modifier = Modifier.Companion
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color.Companion.White)
     ) {
 
         Column(
-            modifier = Modifier
+            modifier = Modifier.Companion
                 .fillMaxSize()
                 .graphicsLayer {
-                    alpha        = contentAlpha.value
+                    alpha = contentAlpha.value
                     translationY = contentOffset.value
                 }
         ) {
@@ -70,7 +101,7 @@ fun LoginScreen(
             // HEADER AZUL CON OLA
             // ══════════════════════════════════════════
             Box(
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .fillMaxWidth()
                     .height(140.dp)
                     .drawBehind {
@@ -95,7 +126,7 @@ fun LoginScreen(
 
                         drawPath(
                             path = path,
-                            brush = Brush.linearGradient(
+                            brush = Brush.Companion.linearGradient(
                                 colors = listOf(Blue800, Blue700, Blue400),
                                 start = Offset(0f, 0f),
                                 end = Offset(size.width, size.height)
@@ -107,19 +138,19 @@ fun LoginScreen(
 
                 // Botón atrás
                 Box(
-                    modifier = Modifier
+                    modifier = Modifier.Companion
                         .padding(start = 16.dp, top = 44.dp)
                         .size(36.dp)
                         .clip(CircleShape)
                         .clickable { onBack() }
-                        .background(Color.White.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center
+                        .background(Color.Companion.White.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Companion.Center
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back),
                         contentDescription = "Atrás",
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        tint = Color.Companion.White,
+                        modifier = Modifier.Companion.size(18.dp)
                     )
                 }
             }
@@ -128,42 +159,42 @@ fun LoginScreen(
             // CONTENIDO BLANCO
             // ══════════════════════════════════════════
             Column(
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(Color.Companion.White)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 28.dp)
             ) {
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.Companion.height(20.dp))
 
                 // Saludo
                 Text(
                     text = "Hola,",
                     fontFamily = Nunito,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Companion.ExtraBold,
                     fontSize = 26.sp,
                     color = TextPrimary
                 )
                 Text(
                     text = "Te damos la bienvenida 👋",
                     fontFamily = Nunito,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Companion.ExtraBold,
                     fontSize = 20.sp,
                     color = Blue800
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.Companion.height(4.dp))
 
                 Text(
                     text = "Ingresa para continuar",
                     fontFamily = Nunito,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Companion.SemiBold,
                     fontSize = 13.sp,
                     color = TextMuted
                 )
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.Companion.height(28.dp))
 
                 // Campo email
                 OutlinedTextField(
@@ -173,7 +204,7 @@ fun LoginScreen(
                         Text(
                             "Correo electrónico",
                             fontFamily = Nunito,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Companion.SemiBold,
                             color = TextMuted
                         )
                     },
@@ -182,23 +213,23 @@ fun LoginScreen(
                             painter = painterResource(R.drawable.ic_email),
                             contentDescription = null,
                             tint = TextMuted,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.Companion.size(20.dp)
                         )
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Email),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.Companion.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor      = Blue800,
-                        unfocusedBorderColor    = BlueBorder,
-                        focusedContainerColor   = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor             = Blue800
+                        focusedBorderColor = Blue800,
+                        unfocusedBorderColor = BlueBorder,
+                        focusedContainerColor = Color.Companion.White,
+                        unfocusedContainerColor = Color.Companion.White,
+                        cursorColor = Blue800
                     )
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.Companion.height(14.dp))
 
                 // Campo contraseña
                 OutlinedTextField(
@@ -208,7 +239,7 @@ fun LoginScreen(
                         Text(
                             "Contraseña",
                             fontFamily = Nunito,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Companion.SemiBold,
                             color = TextMuted
                         )
                     },
@@ -221,138 +252,145 @@ fun LoginScreen(
                                 ),
                                 contentDescription = null,
                                 tint = TextMuted,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.Companion.size(20.dp)
                             )
                         }
                     },
                     visualTransformation = if (passwordVisible)
-                        VisualTransformation.None
+                        VisualTransformation.Companion.None
                     else
                         PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Password),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.Companion.fillMaxWidth(),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor      = Blue800,
-                        unfocusedBorderColor    = BlueBorder,
-                        focusedContainerColor   = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor             = Blue800
+                        focusedBorderColor = Blue800,
+                        unfocusedBorderColor = BlueBorder,
+                        focusedContainerColor = Color.Companion.White,
+                        unfocusedContainerColor = Color.Companion.White,
+                        cursorColor = Blue800
                     )
                 )
 
                 // ¿Olvidaste tu contraseña?
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterEnd
+                    modifier = Modifier.Companion.fillMaxWidth(),
+                    contentAlignment = Alignment.Companion.CenterEnd
                 ) {
                     TextButton(onClick = {}) {
                         Text(
                             text = "¿Olvidaste tu contraseña?",
                             fontFamily = Nunito,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.Companion.ExtraBold,
                             fontSize = 12.sp,
                             color = Blue800
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.Companion.height(4.dp))
 
                 // Botón Continuar
                 Button(
-                    onClick = { onLoginExitoso() },
-                    modifier = Modifier
+                    onClick = { onLoginExitoso(email, password) },
+                    enabled = !cargando,
+                    modifier = Modifier.Companion
                         .fillMaxWidth()
                         .height(52.dp),
-                    shape = RoundedCornerShape(50.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Blue800),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
                     Text(
                         text = "Continuar",
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Companion.ExtraBold,
                         fontSize = 15.sp,
-                        color = Color.White
+                        color = Color.Companion.White
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.Companion.height(20.dp))
 
                 // Divisor
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    verticalAlignment = Alignment.Companion.CenterVertically,
+                    modifier = Modifier.Companion.fillMaxWidth()
                 ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = DividerColor)
+                    HorizontalDivider(
+                        modifier = Modifier.Companion.weight(1f),
+                        color = DividerColor
+                    )
                     Text(
                         text = "  o inicia sesión con  ",
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Companion.SemiBold,
                         fontSize = 12.sp,
                         color = TextMuted
                     )
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = DividerColor)
+                    HorizontalDivider(
+                        modifier = Modifier.Companion.weight(1f),
+                        color = DividerColor
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.Companion.height(16.dp))
 
                 // Botón Google
                 OutlinedButton(
                     onClick = {},
-                    modifier = Modifier
+                    modifier = Modifier.Companion
                         .fillMaxWidth()
                         .height(52.dp),
-                    shape = RoundedCornerShape(50.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White,
-                        contentColor   = TextPrimary
+                        containerColor = Color.Companion.White,
+                        contentColor = TextPrimary
                     )
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_google),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = Color.Unspecified
+                        modifier = Modifier.Companion.size(28.dp),
+                        tint = Color.Companion.Unspecified
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.Companion.width(10.dp))
                     Text(
                         text = "Continuar con Google",
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Companion.Bold,
                         fontSize = 14.sp,
                         color = TextPrimary
                     )
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.Companion.height(28.dp))
 
                 // ¿No tienes cuenta?
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.Companion.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Companion.CenterVertically
                 ) {
                     Text(
                         text = "¿No tienes una cuenta? ",
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Companion.SemiBold,
                         fontSize = 13.sp,
                         color = TextMuted
                     )
                     Text(
                         text = "Regístrate",
                         fontFamily = Nunito,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Companion.ExtraBold,
                         fontSize = 13.sp,
                         color = Blue800,
-                        modifier = Modifier.clickable { onRegistrarse() }
+                        modifier = Modifier.Companion.clickable { onRegistrarse() }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.Companion.height(24.dp))
             }
         }
     }

@@ -1,4 +1,4 @@
-package com.example.rebuska.ui.screens.mensajes
+package com.example.rebuska.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel

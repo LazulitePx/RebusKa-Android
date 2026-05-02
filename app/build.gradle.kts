@@ -1,6 +1,7 @@
 plugins {
-    alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -58,4 +59,20 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth.ktx)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+    // Cloud Firestore
+    implementation("com.google.firebase:firebase-firestore:25.1.1")
+    // Firebase Storage
+    implementation("com.google.firebase:firebase-storage:21.0.1")
+    // Coil — para mostrar imágenes desde URL en Compose
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    implementation(libs.androidx.compose.livedata)
+
+
 }

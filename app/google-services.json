@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "982373103040",
+    "project_id": "rebuska-897c8",
+    "storage_bucket": "rebuska-897c8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:982373103040:android:3f5dbfbe0eb7c955728425",
+        "android_client_info": {
+          "package_name": "com.example.rebuska"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "982373103040-7psvpviro8faun2kdr8meh71lao2ld5k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.rebuska",
+            "certificate_hash": "d3f74d0a53a5b4d42ec66e36d16073c5a9b8fc0a"
+          }
+        },
+        {
+          "client_id": "982373103040-p843a2gu9qd7redfl05vri9hnefv4732.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7nJMwZxf0_0zL8eQ6_qQQDClxlKz3T-w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "982373103040-p843a2gu9qd7redfl05vri9hnefv4732.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -18,6 +18,7 @@ package com.example.rebuska.ui.screens.mensajes
     import com.example.rebuska.navigation.Rutas
     import com.example.rebuska.ui.components.BottomNavBar
     import com.example.rebuska.ui.components.NavDestino
+    import com.example.rebuska.viewmodel.MensajesViewModel
 
 @Composable
 fun MensajesScreen(

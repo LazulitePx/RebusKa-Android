@@ -58,11 +58,11 @@ fun ProfileScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            //seccion de mas empresas
-            MisEmpresasSection(
-                onNuevaEmpresa = { /* TODO: acción crear nueva empresa */},
-                onVerEmpresa = {id ->
-                    navController.navigate(Rutas.empresaRuta(id))
+            //seccion de mas negocios
+            MisNegociosSection(
+                onNuevoNegocio = {},
+                onVerNegocio = {id ->
+                    navController.navigate(Rutas.negocioRuta(id))
                                },
                 onVerPlanes = {
                     // TODO: acción para ver planes de Rebuska Pro
@@ -75,9 +75,9 @@ fun ProfileScreen(navController: NavHostController) {
 }
 
 @Composable
-fun MisEmpresasSection(
-    onNuevaEmpresa: () -> Unit,
-    onVerEmpresa: (Int) -> Unit,
+fun MisNegociosSection(
+    onNuevoNegocio: () -> Unit,
+    onVerNegocio: (String) -> Unit,
     onVerPlanes: () -> Unit
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
@@ -95,12 +95,12 @@ fun MisEmpresasSection(
                         .background(Color(0xFF2196F3))
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Mis empresas", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Mis Negocios", style = MaterialTheme.typography.titleMedium)
             }
 
             // boton con degradado igual al encabezado
             Button(
-                onClick = onNuevaEmpresa,
+                onClick = onNuevoNegocio,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 contentPadding = PaddingValues()
             ) {
@@ -121,15 +121,15 @@ fun MisEmpresasSection(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // tarjeta de empresa
-        EmpresaCard(
+        // Tarjeta de negocio
+       NegocioCard(
             nombre = "Carpintería López",
             rating = 4.7,
             publicacionesActivas = 5,
-            onClick = { onVerEmpresa(1) }
+            onClick = { onVerNegocio("1") }
 
         )
-        // añadir mas empresaCard aqui si el usuario tiene varias empresas
+        // añadir mas negocioCard aqui si el usuario tiene varios negocios
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -186,9 +186,9 @@ fun Encabezado(
     }
 }
 
-// Tarjeta individual para mostrar una empresa en ProfileScreen
+// Tarjeta individual para mostrar un negocio en ProfileScreen
 @Composable
-fun EmpresaCard(
+fun NegocioCard(
     nombre: String,
     rating: Double,
     publicacionesActivas: Int,
@@ -206,7 +206,7 @@ fun EmpresaCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // logo de la empresa
+            // logo del negocio
             Image(
                 painter = painterResource(id = R.drawable.logo_carpinteria),
                 contentDescription = "Logo Carpintería López",
@@ -263,7 +263,7 @@ fun PromoRebuskaPro(onVerPlanes: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Con Rebuska Pro gestionas múltiples empresas y destacas tus publicaciones.",
+                    text = "Con Rebuska Pro gestionas múltiples negocios y destacas tus publicaciones.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White
                 )
