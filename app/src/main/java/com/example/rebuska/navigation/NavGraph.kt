@@ -36,7 +36,6 @@ object Rutas {
     const val REGISTRO_ROL          = "registro_rol"
     const val REGISTRO_1            = "registro_1"
     const val REGISTRO_2            = "registro_2"
-    // ← El teléfono viaja como argumento desde registro hasta la verificación SMS
     const val VERIFICACION_EMAIL    = "verificacion_email/{telefono}"
     const val VERIFICACION_TELEFONO = "verificacion_telefono/{telefono}"
     const val HOME                  = "home"
@@ -46,7 +45,6 @@ object Rutas {
     const val PERFIL                = "perfil"
     const val NEGOCIO               = "negocio/{id}"
 
-    // ── Helpers ───────────────────────────────────────
     fun verificacionEmailRuta(telefono: String)    = "verificacion_email/$telefono"
     fun verificacionTelefonoRuta(telefono: String) = "verificacion_telefono/$telefono"
     fun tiendaRuta(id: String)  = "tienda/$id"
@@ -64,19 +62,29 @@ fun AppNavigation(
 
         // ── SPLASH ────────────────────────────────────────
         composable(Rutas.SPLASH) {
-            val haySesion = Firebase.auth.currentUser != null
             SplashScreen(
                 onSplashFinished = {
-                    if (haySesion) {
-                        navController.navigate(Rutas.HOME) {
-                            popUpTo(Rutas.SPLASH) { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate(Rutas.LOGIN) {
-                            popUpTo(Rutas.SPLASH) { inclusive = true }
-                        }
+                    // Siempre va al HOME — el HOME decide si hay sesión
+                    navController.navigate(Rutas.HOME) {
+                        popUpTo(Rutas.SPLASH) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // ── HOME ──────────────────────────────────────────
+        composable(Rutas.HOME) {
+            val haySesion = Firebase.auth.currentUser != null
+            HomeScreen(
+                onVerTienda = { id -> navController.navigate(Rutas.tiendaRuta(id)) },
+                onLogin = {
+                    if (!haySesion) {
+                        navController.navigate(Rutas.LOGIN)
+                    }
+                    // si hay sesión el botón no hace nada
+                },
+                onChats  = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil = { navController.navigate(Rutas.PERFIL) }
             )
         }
 
@@ -88,8 +96,10 @@ fun AppNavigation(
             val exitoso  by viewModel.loginExitoso.observeAsState(false)
 
             LaunchedEffect(exitoso) {
-                if (exitoso) navController.navigate(Rutas.HOME) {
-                    popUpTo(Rutas.LOGIN) { inclusive = true }
+                if (exitoso) {
+                    navController.navigate(Rutas.HOME) {
+                        popUpTo(Rutas.HOME) { inclusive = false }
+                    }
                 }
             }
 
@@ -149,7 +159,6 @@ fun AppNavigation(
 
             LaunchedEffect(exitoso) {
                 if (exitoso) {
-                    // ← Pasa el teléfono a la pantalla de verificación email
                     navController.navigate(Rutas.verificacionEmailRuta(viewModel.telefono)) {
                         popUpTo(Rutas.REGISTRO_ROL) { inclusive = true }
                     }
@@ -171,7 +180,6 @@ fun AppNavigation(
         }
 
         // ── VERIFICACIÓN EMAIL ────────────────────────────
-        // Recibe el teléfono para pasárselo a la siguiente pantalla
         composable(
             route     = Rutas.VERIFICACION_EMAIL,
             arguments = listOf(navArgument("telefono") { type = NavType.StringType })
@@ -179,7 +187,6 @@ fun AppNavigation(
             val telefono = backStackEntry.arguments?.getString("telefono") ?: ""
             VerificacionEmailScreen(
                 onVerificar = {
-                    // ← Pasa el teléfono a la verificación SMS
                     navController.navigate(Rutas.verificacionTelefonoRuta(telefono))
                 }
             )
@@ -192,26 +199,12 @@ fun AppNavigation(
         ) { backStackEntry ->
             val telefono = backStackEntry.arguments?.getString("telefono") ?: ""
             VerificacionTelefonoScreen(
-                telefono    = telefono,
+                telefono     = telefono,
                 onVerificado = {
                     navController.navigate(Rutas.HOME) {
-                        popUpTo(Rutas.SPLASH) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
-            )
-        }
-
-        // ── HOME ──────────────────────────────────────────
-        composable(Rutas.HOME) {
-            HomeScreen(
-                onVerTienda = { id -> navController.navigate(Rutas.tiendaRuta(id)) },
-                onLogin     = {
-                    navController.navigate(Rutas.LOGIN) {
-                        popUpTo(Rutas.HOME) { inclusive = true }
-                    }
-                },
-                onChats  = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil = { navController.navigate(Rutas.PERFIL) }
             )
         }
 
@@ -220,7 +213,7 @@ fun AppNavigation(
             route     = Rutas.TIENDA,
             arguments = listOf(navArgument("idNegocio") { type = NavType.StringType })
         ) { backStackEntry ->
-            val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: "1"
+            val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: ""
             TiendaScreen(
                 idNegocio = idNegocio,
                 onAtras   = { navController.popBackStack() },
@@ -252,10 +245,10 @@ fun AppNavigation(
         // ── NEGOCIO ───────────────────────────────────────
         composable(
             route     = Rutas.NEGOCIO,
-            arguments = listOf(navArgument("id") { type = NavType.IntType })
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
-            val negocioId = backStackEntry.arguments?.getInt("id") ?: 0
-            ProfileScreenEdit(navController, negocioId)
+            val negocioId = backStackEntry.arguments?.getString("id") ?: ""
+            ProfileScreenEdit(navController, negocioId.toIntOrNull() ?: 0)
         }
     }
 }
