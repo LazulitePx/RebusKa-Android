@@ -1,67 +1,25 @@
 package com.example.rebuska.data.repository
 
 import com.example.rebuska.data.model.Negocio
+import com.example.rebuska.data.remote.FirestoreService
 
 object NegocioRepository {
 
-    private val negocios = mutableListOf(
-        Negocio(
-            id = "1",
-            idTrabajador = "1",
-            nombre = "Carpintería López",
-            descripcion = "Carpintería local con más de 20 años de experiencia. Especializada en muebles a medida, puertas, ventanas y restauración.",
-            categoria = "Carpintería",
-            promCalificacion = 4.7f,
-            totalResenas = 128,
-            verificado = true,
-            logoUrl = null,
-            bannerUrl = null
-        ),
-        Negocio(
-            id = "2",
-            idTrabajador = "2",
-            nombre = "Muebles Alta",
-            descripcion = "Tienda especializada en muebles de alta gama para sala, comedor y alcoba. Diseños modernos y clásicos.",
-            categoria = "Hogar",
-            promCalificacion = 4.5f,
-            totalResenas = 74,
-            verificado = true,
-            logoUrl = null,
-            bannerUrl = null
-        ),
-        Negocio(
-            id = "3",
-            idTrabajador = "3",
-            nombre = "CompuTech",
-            descripcion = "Tienda especializada en equipos gamer y tecnología de alta gama. Asesoría personalizada para armar tu setup ideal.",
-            categoria = "Tecnología",
-            promCalificacion = 4.8f,
-            totalResenas = 210,
-            verificado = true,
-            logoUrl = null,
-            bannerUrl = null
-        )
-    )
+    suspend fun getNegocios(): Result<List<Negocio>> =
+        FirestoreService.getNegocios()
 
-    fun getNegocios(): List<Negocio> = negocios
+    suspend fun getNegocioById(id: String): Result<Negocio> =
+        FirestoreService.getNegocioById(id)
 
-    fun getNegocioById(id: String): Negocio? =
-        negocios.find { it.id == id }
+    suspend fun getNegociosByTrabajador(idTrabajador: String): Result<List<Negocio>> =
+        FirestoreService.getNegociosByTrabajador(idTrabajador)
 
-    fun getNegociosByTrabajador(idTrabajador: String): List<Negocio> =
-        negocios.filter { it.idTrabajador == idTrabajador }
+    suspend fun crearNegocio(negocio: Negocio): Result<String> =
+        FirestoreService.crearNegocio(negocio)
 
-    fun actualizarNombre(idNegocio: String, nuevoNombre: String) {
-        val i = negocios.indexOfFirst { it.id == idNegocio }
-        if (i != -1) {
-            negocios[i] = negocios[i].copy(nombre = nuevoNombre)
-        }
-    }
+    suspend fun actualizarNegocio(id: String, campos: Map<String, Any>): Result<Unit> =
+        FirestoreService.actualizarNegocio(id, campos)
 
-    fun actualizarDescripcion(idNegocio: String, nuevaDescripcion: String) {
-        val i = negocios.indexOfFirst { it.id == idNegocio }
-        if (i != -1) {
-            negocios[i] = negocios[i].copy(descripcion = nuevaDescripcion)
-        }
-    }
+    suspend fun eliminarNegocio(id: String): Result<Unit> =
+        FirestoreService.eliminarNegocio(id)
 }

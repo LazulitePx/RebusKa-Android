@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import com.example.rebuska.R
 import com.example.rebuska.ui.theme.*
 import kotlinx.coroutines.delay
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 @Composable
 fun SplashScreen(
@@ -42,14 +44,8 @@ fun SplashScreen(
                 stiffness = Spring.StiffnessMedium
             )
         )
-        contentAlpha.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(durationMillis = 500)
-        )
-        contentOffset.animateTo(
-            targetValue = 0f,
-            animationSpec = tween(durationMillis = 500)
-        )
+        contentAlpha.animateTo(1f, animationSpec = tween(durationMillis = 500))
+        contentOffset.animateTo(0f, animationSpec = tween(durationMillis = 500))
         loaderProgress.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 1800, easing = FastOutSlowInEasing)

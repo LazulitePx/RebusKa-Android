@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "982373103040-304jalvt5r2giirselj3l2kcauqkhuar.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.rebuska",
+            "certificate_hash": "579a5a1c3a4bf26ad726eb053ad8f922ba1ecf59"
+          }
+        },
+        {
           "client_id": "982373103040-7psvpviro8faun2kdr8meh71lao2ld5k.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.rebuska",
             "certificate_hash": "d3f74d0a53a5b4d42ec66e36d16073c5a9b8fc0a"
+          }
+        },
+        {
+          "client_id": "982373103040-81ehu36h71geean3l8d1mlbloo9d45nd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.rebuska",
+            "certificate_hash": "c7ca2ca7442a89c1362b00b9368f2c1cb7b36add"
           }
         },
         {

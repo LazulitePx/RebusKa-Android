@@ -27,6 +27,8 @@ import com.example.rebuska.ui.screens.verificacion.VerificacionEmailScreen
 import com.example.rebuska.ui.screens.verificacion.VerificacionTelefonoScreen
 import com.example.rebuska.ui.viewmodel.LoginViewModel
 import com.example.rebuska.ui.viewmodel.RegistroViewModel
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 object Rutas {
     const val SPLASH                = "splash"
@@ -62,10 +64,17 @@ fun AppNavigation(
 
         // ── SPLASH ────────────────────────────────────────
         composable(Rutas.SPLASH) {
+            val haySesion = Firebase.auth.currentUser != null
             SplashScreen(
                 onSplashFinished = {
-                    navController.navigate(Rutas.HOME) {
-                        popUpTo(Rutas.SPLASH) { inclusive = true }
+                    if (haySesion) {
+                        navController.navigate(Rutas.HOME) {
+                            popUpTo(Rutas.SPLASH) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Rutas.LOGIN) {
+                            popUpTo(Rutas.SPLASH) { inclusive = true }
+                        }
                     }
                 }
             )
