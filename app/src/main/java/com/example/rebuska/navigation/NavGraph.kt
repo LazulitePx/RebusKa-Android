@@ -27,8 +27,11 @@ import com.example.rebuska.ui.screens.verificacion.VerificacionEmailScreen
 import com.example.rebuska.ui.screens.verificacion.VerificacionTelefonoScreen
 import com.example.rebuska.ui.viewmodel.LoginViewModel
 import com.example.rebuska.ui.viewmodel.RegistroViewModel
+import com.example.rebuska.ui.viewmodel.NegocioViewModel
+import com.example.rebuska.ui.screens.negocio.NegocioFormScreen
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+
 
 object Rutas {
     const val SPLASH                = "splash"
@@ -44,7 +47,8 @@ object Rutas {
     const val MENSAJES              = "mensajes"
     const val CHAT                  = "chat/{nombre}"
     const val PERFIL                = "perfil"
-    const val NEGOCIO               = "negocio/{id}"
+    const val NEGOCIO = "com/example/rebuska/ui/screens/negocio/{id}"
+
 
     // ── Helpers ───────────────────────────────────────
     fun verificacionEmailRuta(telefono: String)    = "verificacion_email/$telefono"
@@ -257,5 +261,11 @@ fun AppNavigation(
             val negocioId = backStackEntry.arguments?.getInt("id") ?: 0
             ProfileScreenEdit(navController, negocioId)
         }
+        // ── FORMULARIO_NEGOCIO ───────────────────────────────────────
+        composable("negocioForm") {
+            val viewModel: NegocioViewModel = viewModel()
+            NegocioFormScreen(viewModel, onBack = { navController.popBackStack() })
+        }
+
     }
 }

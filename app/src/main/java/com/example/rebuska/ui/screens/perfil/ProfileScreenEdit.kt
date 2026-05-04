@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.navigation.NavController
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -138,13 +139,13 @@ fun ProfileScreenEdit(navController: NavHostController, empresaId: Int) {
 
                 //seccion de publicaciones
                 SeccionMisPublicaciones(
+                    navController = navController,
                     publicaciones = publicacionesLista,
-                    onNuevaPublicacionClick = { /* Acción para añadir nueva publicación */ },
-                    onEditPublicacionClick = { publicacion -> /* Acción para editar publicación */ },
-                    onDeletePublicacionClick = { publicacion ->
-                        publicacionesLista.remove(publicacion)
+                    onNuevaPublicacionClick = { /* acción nueva */ },
+                    onEditPublicacionClick = { /* acción editar */ },
+                    onDeletePublicacionClick = { /* acción eliminar */ }
                         // aqui iria la logica para la base de datos
-                    }
+
                 )
             }
         }
@@ -331,6 +332,7 @@ fun SeccionDescripcion(
 
 @Composable
 fun SeccionMisPublicaciones(
+    navController: NavController, // ← agrégalo aquí
     publicaciones: List<PublicacionDisplay>,
     onNuevaPublicacionClick: () -> Unit,
     onEditPublicacionClick: (PublicacionDisplay) -> Unit,
@@ -348,7 +350,7 @@ fun SeccionMisPublicaciones(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Canvas(modifier = Modifier.size(8.dp)) {
-                    drawCircle(color = Color(0xFF1976D2)) // Punto azul
+                    drawCircle(color = Color(0xFF1976D2))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -358,15 +360,11 @@ fun SeccionMisPublicaciones(
                 )
             }
             Button(
-                onClick = onNuevaPublicacionClick,
+                onClick = { navController.navigate("negocioForm") }, // ✅ ahora sí existe
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
                 shape = RoundedCornerShape(50)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = "Nueva",
-                    tint = Color.White
-                )
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "Nueva", tint = Color.White)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(text = "Nueva", color = Color.White)
             }
