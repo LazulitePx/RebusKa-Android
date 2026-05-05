@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import coil.compose.AsyncImage
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -259,63 +260,112 @@ fun NegocioCardHome(
     esPopular: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-    val bannerColors = when (negocio.nombre) {
-        "Carpintería López" -> listOf(Color(0xFF5D4037), Color(0xFF8D6E63))
-        "Muebles Alta"      -> listOf(Color(0xFF37474F), Color(0xFF78909C))
-        "CompuTech"         -> listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62))
-        else                -> listOf(Blue800, Blue700)
+
+    val (bannerColors, bannerEmoji) = when (negocio.nombre) {
+        "Carpintería López" -> Pair(listOf(Color(0xFF5D4037), Color(0xFF8D6E63)), "🪚")
+        "Muebles Alta"      -> Pair(listOf(Color(0xFF37474F), Color(0xFF78909C)), "🛋️")
+        "CompuTech"         -> Pair(listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62)), "🖥️")
+        else                -> Pair(listOf(Blue800, Blue700), "📦")
     }
-    val bannerEmoji = when (negocio.nombre) {
-        "Carpintería López" -> "🪚"
-        "Muebles Alta"      -> "🛋️"
-        "CompuTech"         -> "🖥️"
-        else                -> "📦"
-    }
+
 
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 6.dp),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(155.dp)) {
+                //  Fondo con gradiente
                 Box(
-                    modifier = Modifier.fillMaxSize().background(
-                        Brush.linearGradient(bannerColors, Offset(0f, 0f), Offset(600f, 300f))
-                    ),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(
+                                bannerColors,
+                                start = Offset(0f, 0f),
+                                end = Offset(600f, 300f)
+                            )
+                        ),
                     contentAlignment = Alignment.Center
-                ) { Text(bannerEmoji, fontSize = 60.sp) }
+                ) {
+                    // si el negocio tiene bannerUrl, mostrar imagen
+                    if (negocio.bannerUrl.isNotEmpty()) {
+                        AsyncImage(
+                            model = negocio.bannerUrl,
+                            contentDescription = "Banner del negocio",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // si no tiene imagen, mostrar emoji (personalizado o 📦)
+                        Text(bannerEmoji, fontSize = 60.sp)
+                    }
+                }
 
+                // etiqueta "Popular"
                 if (esPopular) {
                     Box(
-                        modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)
-                            .clip(RoundedCornerShape(20.dp)).background(Color(0xFFFFB300))
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFFFB300))
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Text("✨ Popular", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                            fontSize = 10.sp, color = Color.White)
+                        Text(
+                            "✨ Popular",
+                            fontFamily = Nunito,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 10.sp,
+                            color = Color.White
+                        )
                     }
                 }
             }
+
+            //  informacion del negocio
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(negocio.nombre, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                        fontSize = 14.sp, color = TextPrimary)
-                    Text(negocio.categoria, fontFamily = Nunito, fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp, color = TextMuted)
+                    Text(
+                        negocio.nombre,
+                        fontFamily = Nunito,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.sp,
+                        color = TextPrimary
+                    )
+                    Text(
+                        negocio.categoria,
+                        fontFamily = Nunito,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = TextMuted
+                    )
                 }
+
                 Box(
-                    modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(BlueLight)
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(BlueLight)
                         .border(1.dp, BlueBorder, RoundedCornerShape(20.dp))
                         .padding(horizontal = 12.dp, vertical = 5.dp)
                 ) {
-                    Text(negocio.categoria, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                        fontSize = 11.sp, color = Blue800)
+                    Text(
+                        negocio.categoria,
+                        fontFamily = Nunito,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        color = Blue800
+                    )
                 }
             }
         }

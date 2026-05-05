@@ -3,6 +3,8 @@ package com.example.rebuska.ui.screens.perfil
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +38,7 @@ fun ProfileScreen(navController: NavHostController) {
         AlertDialog(
             onDismissRequest = { mostrarDialogo = false },
             title = { Text("Cerrar sesión", fontWeight = FontWeight.Bold) },
-            text  = { Text("¿Estás seguro que quieres cerrar sesión?") },
+            text = { Text("¿Estás seguro que quieres cerrar sesión?") },
             confirmButton = {
                 TextButton(onClick = {
                     auth.signOut()
@@ -60,11 +62,11 @@ fun ProfileScreen(navController: NavHostController) {
         bottomBar = {
             BottomNavBar(
                 seleccionado = NavDestino.PERFIL,
-                onHome   = { navController.navigate(Rutas.HOME) },
-                onChats  = { navController.navigate(Rutas.MENSAJES) },
+                onHome = { navController.navigate(Rutas.HOME) },
+                onChats = { navController.navigate(Rutas.MENSAJES) },
                 onPerfil = { },
-                onMenu   = { },
-                onLogo   = { navController.navigate(Rutas.HOME) }
+                onMenu = { },
+                onLogo = { navController.navigate(Rutas.HOME) }
             )
         }
     ) { innerPadding ->
@@ -74,7 +76,7 @@ fun ProfileScreen(navController: NavHostController) {
                 .background(Color(0xFFE8E9EA))
                 .padding(innerPadding)
         ) {
-            // ── Encabezado
+            // ── Encabezado ────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -93,13 +95,16 @@ fun ProfileScreen(navController: NavHostController) {
                         .background(Color.White.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(inicial, fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        inicial,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
 
                 Spacer(Modifier.height(10.dp))
-                Text(nombre, fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold, color = Color.White)
+                Text(nombre, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
                 Text(correo, fontSize = 13.sp, color = Color.White.copy(alpha = 0.8f))
                 if (telefono != "Sin teléfono") {
                     Text(telefono, fontSize = 13.sp, color = Color.White.copy(alpha = 0.8f))
@@ -108,9 +113,8 @@ fun ProfileScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Opciones
+            // ── Opciones ────────────────────────────────
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -120,6 +124,32 @@ fun ProfileScreen(navController: NavHostController) {
                         OpcionPerfil(texto = "Mi cuenta", icono = "👤")
                         HorizontalDivider(color = Color(0xFFEEEEEE))
                         OpcionPerfil(texto = "Mis negocios", icono = "🏪")
+
+                        // ── Botón "Nueva" ────────────────────────────────
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = { navController.navigate("negocioForm") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .padding(horizontal = 16.dp),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Nueva",
+                                tint = Color.White
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Nueva",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
+
                         HorizontalDivider(color = Color(0xFFEEEEEE))
                         OpcionPerfil(texto = "Mis publicaciones", icono = "📋")
                         HorizontalDivider(color = Color(0xFFEEEEEE))
@@ -129,18 +159,22 @@ fun ProfileScreen(navController: NavHostController) {
 
                 Spacer(Modifier.height(16.dp))
 
-                // ── Botón cerrar sesión
+                // ── Botón cerrar sesión ────────────────────────────────
                 Button(
                     onClick = { mostrarDialogo = true },
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFEBEE)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFEBEE)),
                     elevation = ButtonDefaults.buttonElevation(0.dp)
                 ) {
-                    Text("Cerrar sesión", color = Color(0xFFE53935),
-                        fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+                    Text(
+                        "Cerrar sesión",
+                        color = Color(0xFFE53935),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 15.sp
+                    )
                 }
             }
         }
@@ -157,8 +191,12 @@ fun OpcionPerfil(texto: String, icono: String) {
     ) {
         Text(icono, fontSize = 20.sp)
         Spacer(Modifier.width(12.dp))
-        Text(texto, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.weight(1f))
+        Text(
+            texto,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f)
+        )
         Text("›", fontSize = 20.sp, color = Color.Gray)
     }
 }

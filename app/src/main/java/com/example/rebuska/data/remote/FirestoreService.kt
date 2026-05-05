@@ -15,7 +15,7 @@ object FirestoreService {
     private val auth = Firebase.auth
 
     private val usuariosCol      = db.collection("usuarios")
-    private val negociosCol      = db.collection("negocios")
+    val negociosCol = db.collection("negocios")
     private val publicacionesCol = db.collection("publicaciones")
     private val perfilesCol      = db.collection("perfiles")
 
