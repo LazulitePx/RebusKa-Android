@@ -27,11 +27,10 @@ import com.example.rebuska.ui.screens.verificacion.VerificacionEmailScreen
 import com.example.rebuska.ui.screens.verificacion.VerificacionTelefonoScreen
 import com.example.rebuska.ui.viewmodel.LoginViewModel
 import com.example.rebuska.ui.viewmodel.RegistroViewModel
-import com.example.rebuska.ui.viewmodel.NegocioViewModel
-import com.example.rebuska.ui.screens.negocio.NegocioFormScreen
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-
+import com.example.rebuska.ui.viewmodel.NegocioViewModel
+import com.example.rebuska.ui.screens.negocio.NegocioFormScreen
 
 object Rutas {
     const val SPLASH                = "splash"
@@ -44,10 +43,9 @@ object Rutas {
     const val HOME                  = "home"
     const val TIENDA                = "tienda/{idNegocio}"
     const val MENSAJES              = "mensajes"
-    const val CHAT                  = "chat/{nombre}"
+    const val CHAT                  = "chat/{chatId}"
     const val PERFIL                = "perfil"
     const val NEGOCIO = "com/example/rebuska/ui/screens/negocio/{id}"
-
 
     fun verificacionEmailRuta(telefono: String)    = "verificacion_email/$telefono"
     fun verificacionTelefonoRuta(telefono: String) = "verificacion_telefono/$telefono"
@@ -219,11 +217,12 @@ fun AppNavigation(
         ) { backStackEntry ->
             val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: ""
             TiendaScreen(
-                idNegocio = idNegocio,
-                onAtras   = { navController.popBackStack() },
-                onHome    = { navController.navigate(Rutas.HOME) },
-                onChats   = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil  = { navController.navigate(Rutas.PERFIL) }
+                idNegocio   = idNegocio,
+                onAtras     = { navController.popBackStack() },
+                onContratar = { chatId -> navController.navigate("chat/$chatId") },
+                onHome      = { navController.navigate(Rutas.HOME) },
+                onChats     = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil    = { navController.navigate(Rutas.PERFIL) }
             )
         }
 
@@ -235,10 +234,10 @@ fun AppNavigation(
         // ── CHAT ──────────────────────────────────────────
         composable(
             route     = Rutas.CHAT,
-            arguments = listOf(navArgument("nombre") { type = NavType.StringType })
+            arguments = listOf(navArgument("chatId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val nombre = backStackEntry.arguments?.getString("nombre") ?: ""
-            ChatScreen(nombre = nombre, onBack = { navController.popBackStack() })
+            val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
+            ChatScreen(chatId = chatId, onBack = { navController.popBackStack() })
         }
 
         // ── PERFIL ────────────────────────────────────────
@@ -254,11 +253,10 @@ fun AppNavigation(
             val negocioId = backStackEntry.arguments?.getString("id") ?: ""
             ProfileScreenEdit(navController, negocioId.toIntOrNull() ?: 0)
         }
-        // ── FORMULARIO_NEGOCIO ───────────────────────────────────────
         composable("negocioForm") {
             val viewModel: NegocioViewModel = viewModel()
             NegocioFormScreen(viewModel, onBack = { navController.popBackStack() })
         }
-
     }
-}   
+
+}

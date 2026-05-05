@@ -132,12 +132,12 @@ fun SplashScreen(
         }
 
         // ── Barra de carga inferior ───────────────────
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 72.dp)
-                    .graphicsLayer { alpha = contentAlpha.value }
-            ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 72.dp)
+                .graphicsLayer { alpha = contentAlpha.value }
+        ) {
             Box(
                 modifier = Modifier
                     .width(120.dp)

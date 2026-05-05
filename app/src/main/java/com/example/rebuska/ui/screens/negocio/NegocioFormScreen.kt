@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.rebuska.ui.viewmodel.NegocioViewModel
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NegocioFormScreen(viewModel: NegocioViewModel, onBack: () -> Unit) {
@@ -30,7 +29,6 @@ fun NegocioFormScreen(viewModel: NegocioViewModel, onBack: () -> Unit) {
     var bannerUri by remember { mutableStateOf<String?>(null) }
     var mensaje by remember { mutableStateOf<String?>(null) }
 
-    // lanzadores para seleccionar imagenes desde galeria
     val logoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             logoBytes = context.contentResolver.openInputStream(it)?.use { stream -> stream.readBytes() }
@@ -45,7 +43,6 @@ fun NegocioFormScreen(viewModel: NegocioViewModel, onBack: () -> Unit) {
         }
     }
 
-    // visual del formulario
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -55,10 +52,7 @@ fun NegocioFormScreen(viewModel: NegocioViewModel, onBack: () -> Unit) {
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(20.dp)
-                .fillMaxSize(),
+            modifier = Modifier.padding(innerPadding).padding(20.dp).fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
@@ -66,17 +60,14 @@ fun NegocioFormScreen(viewModel: NegocioViewModel, onBack: () -> Unit) {
             OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(value = categoria, onValueChange = { categoria = it }, label = { Text("Categoría") }, modifier = Modifier.fillMaxWidth())
-
             Spacer(Modifier.height(16.dp))
 
-            // vista previa del logo
             logoUri?.let { Image(painter = rememberAsyncImagePainter(it), contentDescription = "Logo", modifier = Modifier.size(100.dp)) }
             Button(onClick = { logoLauncher.launch("image/*") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(50.dp)) {
                 Text("Seleccionar logo", color = Color.White)
             }
             Spacer(Modifier.height(12.dp))
 
-            // vista previa del banner
             bannerUri?.let { Image(painter = rememberAsyncImagePainter(it), contentDescription = "Banner", modifier = Modifier.fillMaxWidth().height(120.dp)) }
             Button(onClick = { bannerLauncher.launch("image/*") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(50.dp)) {
                 Text("Seleccionar banner", color = Color.White)
@@ -91,13 +82,8 @@ fun NegocioFormScreen(viewModel: NegocioViewModel, onBack: () -> Unit) {
                         categoria = categoria,
                         logoBytes = logoBytes,
                         bannerBytes = bannerBytes,
-                        onSuccess = {
-                            mensaje = "Negocio guardado correctamente ✅"
-                            onBack()
-                        },
-                        onError = { error ->
-                            mensaje = "Error: $error"
-                        }
+                        onSuccess = { mensaje = "Negocio guardado correctamente ✅"; onBack() },
+                        onError = { error -> mensaje = "Error: $error" }
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -114,4 +100,3 @@ fun NegocioFormScreen(viewModel: NegocioViewModel, onBack: () -> Unit) {
         }
     }
 }
-

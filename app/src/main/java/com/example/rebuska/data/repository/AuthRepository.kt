@@ -28,6 +28,14 @@ object AuthRepository {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val uid    = result.user!!.uid
 
+            // ── Actualizar displayName con nombre + apellido ──
+            val nombre   = datosUsuario["nombre"]   as? String ?: ""
+            val apellido = datosUsuario["apellido"] as? String ?: ""
+            val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                .setDisplayName("$nombre $apellido".trim())
+                .build()
+            result.user?.updateProfile(profileUpdates)?.await()
+
             // Enviar verificación de correo
             result.user?.sendEmailVerification()?.await()
 

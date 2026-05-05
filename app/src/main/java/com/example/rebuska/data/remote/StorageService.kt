@@ -1,12 +1,11 @@
 package com.example.rebuska.data.remote
 
 import android.net.Uri
-import com.google.firebase.storage.FirebaseStorage // <--- ¡Asegúrate de tener esta importación!
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
-import android.util.Log // Importa Log para depuración
+import android.util.Log
 
-
-object StorageService { // O si lo inyectas, puede ser una clase
+object StorageService {
     private val storage = FirebaseStorage.getInstance()
 
     suspend fun uploadImage(bytes: ByteArray, path: String): Result<String> = runCatching {

@@ -31,7 +31,7 @@ fun BottomNavBar(
         containerColor = Color.White,
         tonalElevation = 0.dp,
 
-    ) {
+        ) {
         NavigationBarItem(
             selected = seleccionado == NavDestino.HOME,
             onClick = onHome,
@@ -59,9 +59,9 @@ fun BottomNavBar(
             icon = {
                 Box(
                     modifier = Modifier.size(70.dp)
-                                       .offset(y = 6.dp)
-                                       .clip(CircleShape)
-                                       .background(Color.White),
+                        .offset(y = 6.dp)
+                        .clip(CircleShape)
+                        .background(Color.White),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(painterResource(R.drawable.logo), null, Modifier.size(50.dp), tint = Color.Unspecified)

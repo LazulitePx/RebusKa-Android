@@ -32,17 +32,21 @@ import com.example.rebuska.ui.components.NavDestino
 import com.example.rebuska.ui.theme.*
 import com.example.rebuska.viewmodel.TiendaUiState
 import com.example.rebuska.viewmodel.TiendaViewModel
+import com.example.rebuska.viewmodel.ChatViewModel
+
+
 
 @Composable
 fun TiendaScreen(
     idNegocio: String = "",
     onAtras: () -> Unit = {},
-    onContratar: () -> Unit = {},
+    onContratar: (chatId: String) -> Unit = {},
     onChats: () -> Unit = {},
     onPerfil: () -> Unit = {},
     onHome: () -> Unit = {},
     viewModel: TiendaViewModel = viewModel()
 ) {
+    val chatViewModel: ChatViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(idNegocio) {
@@ -66,17 +70,24 @@ fun TiendaScreen(
                         .padding(horizontal = 18.dp, vertical = 10.dp)
                 ) {
                     Button(
-                        onClick = onContratar,
+                        onClick = {
+                            val n = (uiState as? TiendaUiState.Exito)?.negocio
+                            if (n != null) {
+                                chatViewModel.contactar(
+                                    idTrabajador  = n.idTrabajador,
+                                    nombreNegocio = n.nombre,
+                                    onChatListo   = { chatId -> onContratar(chatId) }
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Blue800),
                         elevation = ButtonDefaults.buttonElevation(4.dp)
                     ) {
-                        Icon(painterResource(R.drawable.ic_calendar), null,
-                            Modifier.size(16.dp), tint = Color.White)
+                        Icon(painterResource(R.drawable.ic_calendar), null, Modifier.size(16.dp), tint = Color.White)
                         Spacer(Modifier.width(6.dp))
-                        Text("Contactar", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                            fontSize = 14.sp, color = Color.White)
+                        Text("Contactar", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = Color.White)
                     }
                 }
                 BottomNavBar(

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.navigation.NavController
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,6 +56,7 @@ import com.example.rebuska.R
 import com.example.rebuska.navigation.Rutas
 import com.example.rebuska.ui.components.BottomNavBar
 import com.example.rebuska.ui.components.NavDestino
+
 
 // data class para vista (provisional)
 data class EmpresaDisplay(
@@ -131,25 +131,25 @@ fun ProfileScreenEdit(navController: NavHostController, empresaId: Int) {
             Spacer(modifier = Modifier.height(16.dp))
             //dexripcion
             SeccionDescripcion(
-                    descripcion = "Carpintería local con más de 20 años de experiencia, comprometidos en ofrecer los mejores productos de madera. Expertos en muebles a medida, puertas, ventanas y restauración.",
-                    onEditClick = { /* Acción para editar descripción */ }
-                )
+                descripcion = "Carpintería local con más de 20 años de experiencia, comprometidos en ofrecer los mejores productos de madera. Expertos en muebles a medida, puertas, ventanas y restauración.",
+                onEditClick = { /* Acción para editar descripción */ }
+            )
 
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                //seccion de publicaciones
-                SeccionMisPublicaciones(
-                    navController = navController,
-                    publicaciones = publicacionesLista,
-                    onNuevaPublicacionClick = { /* acción nueva */ },
-                    onEditPublicacionClick = { /* acción editar */ },
-                    onDeletePublicacionClick = { /* acción eliminar */ }
-                        // aqui iria la logica para la base de datos
-
-                )
-            }
+            //seccion de publicaciones
+            SeccionMisPublicaciones(
+                publicaciones = publicacionesLista,
+                onNuevaPublicacionClick = { /* Acción para añadir nueva publicación */ },
+                onEditPublicacionClick = { publicacion -> /* Acción para editar publicación */ },
+                onDeletePublicacionClick = { publicacion ->
+                    publicacionesLista.remove(publicacion)
+                    // aqui iria la logica para la base de datos
+                }
+            )
         }
     }
+}
 
 
 // componentes internnos
@@ -332,7 +332,6 @@ fun SeccionDescripcion(
 
 @Composable
 fun SeccionMisPublicaciones(
-    navController: NavController, // ← agrégalo aquí
     publicaciones: List<PublicacionDisplay>,
     onNuevaPublicacionClick: () -> Unit,
     onEditPublicacionClick: (PublicacionDisplay) -> Unit,
@@ -350,7 +349,7 @@ fun SeccionMisPublicaciones(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Canvas(modifier = Modifier.size(8.dp)) {
-                    drawCircle(color = Color(0xFF1976D2))
+                    drawCircle(color = Color(0xFF1976D2)) // Punto azul
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -360,11 +359,15 @@ fun SeccionMisPublicaciones(
                 )
             }
             Button(
-                onClick = { navController.navigate("negocioForm") }, // ✅ ahora sí existe
+                onClick = onNuevaPublicacionClick,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
                 shape = RoundedCornerShape(50)
             ) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = "Nueva", tint = Color.White)
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "Nueva",
+                    tint = Color.White
+                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(text = "Nueva", color = Color.White)
             }

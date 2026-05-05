@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import coil.compose.AsyncImage
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -31,6 +30,7 @@ import com.example.rebuska.ui.components.NavDestino
 import com.example.rebuska.ui.theme.*
 import com.example.rebuska.viewmodel.HomeUiState
 import com.example.rebuska.viewmodel.HomeViewModel
+import coil.compose.AsyncImage
 
 data class Categoria(val emoji: String, val nombre: String)
 
@@ -260,14 +260,12 @@ fun NegocioCardHome(
     esPopular: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-
     val (bannerColors, bannerEmoji) = when (negocio.nombre) {
         "Carpintería López" -> Pair(listOf(Color(0xFF5D4037), Color(0xFF8D6E63)), "🪚")
         "Muebles Alta"      -> Pair(listOf(Color(0xFF37474F), Color(0xFF78909C)), "🛋️")
         "CompuTech"         -> Pair(listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62)), "🖥️")
         else                -> Pair(listOf(Blue800, Blue700), "📦")
     }
-
 
     Card(
         onClick = onClick,
@@ -280,7 +278,6 @@ fun NegocioCardHome(
     ) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(155.dp)) {
-                //  Fondo con gradiente
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -307,7 +304,6 @@ fun NegocioCardHome(
                     }
                 }
 
-                // etiqueta "Popular"
                 if (esPopular) {
                     Box(
                         modifier = Modifier
@@ -327,7 +323,6 @@ fun NegocioCardHome(
                     }
                 }
             }
-
             //  informacion del negocio
             Row(
                 modifier = Modifier
@@ -351,7 +346,6 @@ fun NegocioCardHome(
                         color = TextMuted
                     )
                 }
-
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
