@@ -4,39 +4,85 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.rebuska.navigation.Rutas
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.layout.ContentScale
 import com.example.rebuska.ui.components.BottomNavBar
 import com.example.rebuska.ui.components.NavDestino
-import com.example.rebuska.R
-
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun ProfileScreen(navController: NavHostController) {
+    val auth = Firebase.auth
+    val usuario = auth.currentUser
+
+    var nombre by remember { mutableStateOf("Usuario") }
+    var correo by remember { mutableStateOf("") }
+    val telefono = usuario?.phoneNumber ?: ""
+    val inicial by remember(nombre) { derivedStateOf { nombre.firstOrNull()?.uppercaseChar()?.toString() ?: "U" } }
+
+    LaunchedEffect(usuario) {
+        usuario?.let {
+            correo = it.email ?: it.phoneNumber ?: "Sin información"
+            if (!it.displayName.isNullOrEmpty()) {
+                nombre = it.displayName!!
+            } else {
+                val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("usuarios")
+                    .document(it.uid)
+                    .get()
+                    .await()
+                val n = doc.getString("nombre") ?: ""
+                val a = doc.getString("apellido") ?: ""
+                nombre = "$n $a".trim().ifEmpty { correo.substringBefore("@") }
+            }
+        }
+    }
+
+    var mostrarDialogo by remember { mutableStateOf(false) }
+
+    if (mostrarDialogo) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogo = false },
+            title = { Text("Cerrar sesión", fontWeight = FontWeight.Bold) },
+            text  = { Text("¿Estás seguro que quieres cerrar sesión?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    auth.signOut()
+                    mostrarDialogo = false
+                    navController.navigate(Rutas.HOME) {
+                        popUpTo(Rutas.HOME) { inclusive = true }
+                    }
+                }) {
+                    Text("Sí, salir", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogo = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Scaffold(
         bottomBar = {
             BottomNavBar(
                 seleccionado = NavDestino.PERFIL,
                 onHome   = { navController.navigate(Rutas.HOME) },
                 onChats  = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil = { navController.navigate(Rutas.PERFIL) },
-                onMenu   = { /* acción menú */ },
+                onPerfil = { },
+                onMenu   = { },
                 onLogo   = { navController.navigate(Rutas.HOME) }
             )
         }
@@ -47,243 +93,91 @@ fun ProfileScreen(navController: NavHostController) {
                 .background(Color(0xFFE8E9EA))
                 .padding(innerPadding)
         ) {
-            // encabezado para reutilizar
-            Encabezado(
-                nombre = "Carlos López",
-                correo = "carlos.lopez@gmail.com",
-                valoracion = 4.7,
-                reseñas = 128,
-                imagenRes = R.drawable.foto_perfil_trabajador
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            //seccion de mas empresas
-            MisEmpresasSection(
-                onNuevaEmpresa = { /* TODO: acción crear nueva empresa */},
-                onVerEmpresa = {id ->
-                    navController.navigate(Rutas.empresaRuta(id))
-                               },
-                onVerPlanes = {
-                    // TODO: acción para ver planes de Rebuska Pro
-                    // mas adelante porne algo sobre los planes
-                }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-fun MisEmpresasSection(
-    onNuevaEmpresa: () -> Unit,
-    onVerEmpresa: (Int) -> Unit,
-    onVerPlanes: () -> Unit
-) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        // encabezado de la seccion
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF2196F3))
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Mis empresas", style = MaterialTheme.typography.titleMedium)
-            }
-
-            // boton con degradado igual al encabezado
-            Button(
-                onClick = onNuevaEmpresa,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                contentPadding = PaddingValues()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(Color(0xFF1e5dba), Color(0xFF2989e0))
-                            ),
-                            shape = MaterialTheme.shapes.small
+            // ── Encabezado
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF1e5dba), Color(0xFF2989e0))
                         )
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "+ Nueva", color = Color.White)
+                    Text(inicial, fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold, color = Color.White)
+                }
+
+                Spacer(Modifier.height(10.dp))
+                Text(nombre, fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold, color = Color.White)
+                Text(correo, fontSize = 13.sp, color = Color.White.copy(alpha = 0.8f))
+                if (telefono != "Sin teléfono") {
+                    Text(telefono, fontSize = 13.sp, color = Color.White.copy(alpha = 0.8f))
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ── Opciones
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column {
+                        OpcionPerfil(texto = "Mi cuenta", icono = "👤")
+                        HorizontalDivider(color = Color(0xFFEEEEEE))
+                        OpcionPerfil(texto = "Mis negocios", icono = "🏪")
+                        HorizontalDivider(color = Color(0xFFEEEEEE))
+                        OpcionPerfil(texto = "Mis publicaciones", icono = "📋")
+                        HorizontalDivider(color = Color(0xFFEEEEEE))
+                        OpcionPerfil(texto = "Configuración", icono = "⚙️")
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // ── Botón cerrar sesion
+                Button(
+                    onClick = { mostrarDialogo = true },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFEBEE)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(0.dp)
+                ) {
+                    Text("Cerrar sesión", color = Color(0xFFE53935),
+                        fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // tarjeta de empresa
-        EmpresaCard(
-            nombre = "Carpintería López",
-            rating = 4.7,
-            publicacionesActivas = 5,
-            onClick = { onVerEmpresa(1) }
-
-        )
-        // añadir mas empresaCard aqui si el usuario tiene varias empresas
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Tarjeta promocional
-        PromoRebuskaPro(onVerPlanes = onVerPlanes)
     }
 }
 
 @Composable
-fun Encabezado(
-    nombre: String,
-    correo: String,
-    valoracion: Double,
-    reseñas: Int,
-    imagenRes: Int
-) {
-    Column(
+fun OpcionPerfil(texto: String, icono: String) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1e5dba), Color(0xFF2989e0))
-                )
-            )
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(80.dp).clip(CircleShape)
-                .background(Color.Gray),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = imagenRes),
-                contentDescription = "Imagen de encabezado",
-                modifier = Modifier.size(80.dp).clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-            //iniciales si no hay foto
-            Text(text = "CL", color = Color.White, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(text = nombre, style = MaterialTheme.typography.titleLarge, color = Color.White)
-        Text(text = correo, style = MaterialTheme.typography.bodyMedium, color = Color.LightGray)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(text = "⭐ $valoracion - $reseñas reseñas",
-            color = Color.Yellow,
-            style = MaterialTheme.typography.bodyMedium)
+        Text(icono, fontSize = 20.sp)
+        Spacer(Modifier.width(12.dp))
+        Text(texto, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f))
+        Text("›", fontSize = 20.sp, color = Color.Gray)
     }
-}
-
-// Tarjeta individual para mostrar una empresa en ProfileScreen
-@Composable
-fun EmpresaCard(
-    nombre: String,
-    rating: Double,
-    publicacionesActivas: Int,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // logo de la empresa
-            Image(
-                painter = painterResource(id = R.drawable.logo_carpinteria),
-                contentDescription = "Logo Carpintería López",
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column {
-                Text(text = nombre, style = MaterialTheme.typography.titleMedium)
-                Text(text = "⭐ $rating")
-                Text(text = "$publicacionesActivas publicaciones activas")
-            }
-        }
-    }
-}
-//Tarjeta promocial
-@Composable
-fun PromoRebuskaPro(onVerPlanes: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2989e0)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_visajoso),
-                contentDescription = "Logo Rebuska",
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF1e5dba)),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "¿Tienes más de un negocio?",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Con Rebuska Pro gestionas múltiples empresas y destacas tus publicaciones.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = onVerPlanes,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
-            ) {
-                Text(text = "Ver planes", color = Color(0xFF2989e0))
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ProfileScreenPreview() {
-    val navController = rememberNavController()
-    ProfileScreen(navController)
 }
