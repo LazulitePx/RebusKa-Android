@@ -41,7 +41,7 @@ object Rutas {
     const val HOME                  = "home"
     const val TIENDA                = "tienda/{idNegocio}"
     const val MENSAJES              = "mensajes"
-    const val CHAT                  = "chat/{nombre}"
+    const val CHAT                  = "chat/{chatId}"
     const val PERFIL                = "perfil"
     const val NEGOCIO               = "negocio/{id}"
 
@@ -215,11 +215,12 @@ fun AppNavigation(
         ) { backStackEntry ->
             val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: ""
             TiendaScreen(
-                idNegocio = idNegocio,
-                onAtras   = { navController.popBackStack() },
-                onHome    = { navController.navigate(Rutas.HOME) },
-                onChats   = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil  = { navController.navigate(Rutas.PERFIL) }
+                idNegocio   = idNegocio,
+                onAtras     = { navController.popBackStack() },
+                onContratar = { chatId -> navController.navigate("chat/$chatId") },
+                onHome      = { navController.navigate(Rutas.HOME) },
+                onChats     = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil    = { navController.navigate(Rutas.PERFIL) }
             )
         }
 
@@ -231,10 +232,10 @@ fun AppNavigation(
         // ── CHAT ──────────────────────────────────────────
         composable(
             route     = Rutas.CHAT,
-            arguments = listOf(navArgument("nombre") { type = NavType.StringType })
+            arguments = listOf(navArgument("chatId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val nombre = backStackEntry.arguments?.getString("nombre") ?: ""
-            ChatScreen(nombre = nombre, onBack = { navController.popBackStack() })
+            val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
+            ChatScreen(chatId = chatId, onBack = { navController.popBackStack() })
         }
 
         // ── PERFIL ────────────────────────────────────────

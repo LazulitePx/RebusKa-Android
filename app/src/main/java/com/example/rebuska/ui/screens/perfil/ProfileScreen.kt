@@ -19,16 +19,35 @@ import com.example.rebuska.ui.components.BottomNavBar
 import com.example.rebuska.ui.components.NavDestino
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun ProfileScreen(navController: NavHostController) {
     val auth = Firebase.auth
     val usuario = auth.currentUser
 
-    val nombre = usuario?.displayName?.ifEmpty { "Usuario" } ?: "Usuario"
-    val correo = usuario?.email ?: "Sin correo"
-    val telefono = usuario?.phoneNumber ?: "Sin teléfono"
-    val inicial = nombre.firstOrNull()?.uppercaseChar()?.toString() ?: "U"
+    var nombre by remember { mutableStateOf("Usuario") }
+    var correo by remember { mutableStateOf("") }
+    val telefono = usuario?.phoneNumber ?: ""
+    val inicial by remember(nombre) { derivedStateOf { nombre.firstOrNull()?.uppercaseChar()?.toString() ?: "U" } }
+
+    LaunchedEffect(usuario) {
+        usuario?.let {
+            correo = it.email ?: it.phoneNumber ?: "Sin información"
+            if (!it.displayName.isNullOrEmpty()) {
+                nombre = it.displayName!!
+            } else {
+                val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("usuarios")
+                    .document(it.uid)
+                    .get()
+                    .await()
+                val n = doc.getString("nombre") ?: ""
+                val a = doc.getString("apellido") ?: ""
+                nombre = "$n $a".trim().ifEmpty { correo.substringBefore("@") }
+            }
+        }
+    }
 
     var mostrarDialogo by remember { mutableStateOf(false) }
 
@@ -129,7 +148,7 @@ fun ProfileScreen(navController: NavHostController) {
 
                 Spacer(Modifier.height(16.dp))
 
-                // ── Botón cerrar sesión
+                // ── Botón cerrar sesion
                 Button(
                     onClick = { mostrarDialogo = true },
                     modifier = Modifier.fillMaxWidth().height(52.dp),

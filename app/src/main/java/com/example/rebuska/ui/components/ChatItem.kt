@@ -33,6 +33,7 @@ fun ChatItem(
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // ── Avatar
         Box(
             modifier = Modifier
                 .size(50.dp)
@@ -48,14 +49,50 @@ fun ChatItem(
 
         Spacer(modifier = Modifier.width(10.dp))
 
+        // ── Nombre y último mensaje
         Column(modifier = Modifier.weight(1f)) {
-            Text(chat.nombreContacto, fontWeight = FontWeight.Bold)
-            Text(chat.ultimoMensaje, fontSize = 12.sp, color = Color.Gray, maxLines = 1)
+            Text(
+                chat.nombreContacto,
+                fontWeight = if (chat.noLeidos > 0) FontWeight.ExtraBold else FontWeight.Bold
+            )
+            Text(
+                chat.ultimoMensaje,
+                fontSize = 12.sp,
+                color = if (chat.noLeidos > 0) Color(0xFF1976D2) else Color.Gray,
+                fontWeight = if (chat.noLeidos > 0) FontWeight.SemiBold else FontWeight.Normal,
+                maxLines = 1
+            )
         }
 
-        val hora = if (chat.timestamp > 0L) {
-            SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(chat.timestamp))
-        } else ""
-        Text(hora, fontSize = 10.sp, color = Color.Gray)
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // ── Hora y contador
+        Column(horizontalAlignment = Alignment.End) {
+            val hora = if (chat.timestamp > 0L) {
+                SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(chat.timestamp))
+            } else ""
+            Text(
+                hora,
+                fontSize = 10.sp,
+                color = if (chat.noLeidos > 0) Color(0xFF1976D2) else Color.Gray
+            )
+
+            if (chat.noLeidos > 0) {
+                Spacer(Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .background(Color(0xFF1976D2), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (chat.noLeidos > 9) "9+" else "${chat.noLeidos}",
+                        fontSize = 10.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            }
+        }
     }
 }
