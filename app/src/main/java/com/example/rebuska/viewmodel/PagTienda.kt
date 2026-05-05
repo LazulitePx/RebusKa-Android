@@ -1,6 +1,5 @@
 package com.example.rebuska.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -15,40 +14,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rebuska.R
+import com.example.rebuska.data.model.Negocio
 import com.example.rebuska.data.model.Publicacion
-import com.example.rebuska.data.model.TipoPublicacion
-import com.example.rebuska.data.repository.NegocioRepository
-import com.example.rebuska.data.repository.PublicacionRepository
 import com.example.rebuska.ui.components.BottomNavBar
 import com.example.rebuska.ui.components.NavDestino
 import com.example.rebuska.ui.theme.*
 
 @Composable
 fun TiendaScreen(
-    idNegocio: Int = 1,
+    idNegocio: String = "",
     onAtras: () -> Unit = {},
     onContratar: () -> Unit = {},
     onChats: () -> Unit = {},
     onPerfil: () -> Unit = {},
-    onHome: () -> Unit = {}
+    onHome: () -> Unit = {},
+    viewModel: TiendaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    val negocio       = remember { NegocioRepository.getNegocioById(idNegocio) }
-    val publicaciones = remember { PublicacionRepository.getPublicacionesByNegocio(idNegocio) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    if (negocio == null) return
+    LaunchedEffect(idNegocio) {
+        viewModel.cargar(idNegocio)
+    }
+
+    val negocio = when (val s = uiState) {
+        is TiendaUiState.Exito -> s.negocio
+        else -> Negocio()
+    }
+    val publicaciones = when (val s = uiState) {
+        is TiendaUiState.Exito -> s.publicaciones
+        else -> emptyList()
+    }
 
     Scaffold(
         bottomBar = {
             Column {
-                // ── Botón Contactar ──
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -67,8 +72,6 @@ fun TiendaScreen(
                         Text("Contactar", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = Color.White)
                     }
                 }
-
-                // ── ✅ Navbar reutilizable ──
                 BottomNavBar(
                     seleccionado = NavDestino.HOME,
                     onHome   = onHome,
@@ -87,7 +90,20 @@ fun TiendaScreen(
                 .padding(innerPadding)
         ) {
 
-            // ── Header ───
+            // ── Estado cargando / error
+            when (val s = uiState) {
+                is TiendaUiState.Cargando -> item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Blue800)
+                    }
+                }
+                is TiendaUiState.Error -> item {
+                    Text("⚠️ ${s.mensaje}", color = Color.Red, modifier = Modifier.padding(16.dp))
+                }
+                else -> {}
+            }
+
+            // ── Header
             item {
                 Box(
                     modifier = Modifier
@@ -110,14 +126,15 @@ fun TiendaScreen(
                                 .background(Color.White.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            IconButton(onClick = { onAtras() }, modifier = Modifier.size(36.dp)) {
+                            IconButton(onClick = onAtras, modifier = Modifier.size(36.dp)) {
                                 Icon(painterResource(R.drawable.ic_arrow_back), null,
                                     tint = Color.White, modifier = Modifier.size(18.dp))
                             }
                         }
                         Text(
-                            text = negocio.nombre, fontFamily = Nunito,
-                            fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, color = Color.White,
+                            text = negocio.nombre.ifEmpty { "Cargando..." },
+                            fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp, color = Color.White,
                             modifier = Modifier.weight(1f), maxLines = 1
                         )
                         Box(
@@ -132,38 +149,29 @@ fun TiendaScreen(
                 }
             }
 
-            // ── Banner ────────────────────────────────
+            // ── Banner
             item {
+                val bannerColors = when (negocio.nombre) {
+                    "Carpintería López" -> listOf(Color(0xFF5D4037), Color(0xFF8D6E63))
+                    "Muebles Alta"      -> listOf(Color(0xFF37474F), Color(0xFF78909C))
+                    "CompuTech"         -> listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62))
+                    else                -> listOf(Blue800, Blue700)
+                }
+                val bannerEmoji = when (negocio.nombre) {
+                    "Carpintería López" -> "🪵"
+                    "Muebles Alta"      -> "🛋️"
+                    "CompuTech"         -> "🖥️"
+                    else                -> "🏪"
+                }
                 Box(modifier = Modifier.fillMaxWidth().height(170.dp)) {
-                    if (negocio.banner != null) {
-                        Image(
-                            painter = painterResource(negocio.banner),
-                            contentDescription = "Banner ${negocio.nombre}",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        val colors = when (negocio.nombre) {
-                            "Carpintería López" -> listOf(Color(0xFF5D4037), Color(0xFF8D6E63))
-                            "Muebles Alta"      -> listOf(Color(0xFF37474F), Color(0xFF78909C))
-                            "CompuTech"         -> listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62))
-                            else                -> listOf(Blue800, Blue700)
-                        }
-                        val emoji = when (negocio.nombre) {
-                            "Carpintería López" -> "🪵"
-                            "Muebles Alta"      -> "🛋️"
-                            "CompuTech"         -> "🖥️"
-                            else                -> "🏪"
-                        }
-                        Box(
-                            modifier = Modifier.fillMaxSize().background(
-                                Brush.linearGradient(colors,
-                                    androidx.compose.ui.geometry.Offset(0f, 0f),
-                                    androidx.compose.ui.geometry.Offset(600f, 300f))
-                            ),
-                            contentAlignment = Alignment.Center
-                        ) { Text(emoji, fontSize = 60.sp) }
-                    }
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(
+                            Brush.linearGradient(bannerColors,
+                                androidx.compose.ui.geometry.Offset(0f, 0f),
+                                androidx.compose.ui.geometry.Offset(600f, 300f))
+                        ),
+                        contentAlignment = Alignment.Center
+                    ) { Text(bannerEmoji, fontSize = 60.sp) }
                     Box(
                         modifier = Modifier.fillMaxSize().background(
                             Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.35f)))
@@ -172,58 +180,40 @@ fun TiendaScreen(
                 }
             }
 
-            // ── Perfil ─────────────────────────────────
+            // ── Perfil del negocio
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth().background(Color.White)
                         .padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-
-                        // Fila: logo + nombre + guardar
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Logo circular
+                            val logoEmoji = when (negocio.nombre) {
+                                "Carpintería López" -> "🪚"
+                                "Muebles Alta"      -> "🛋️"
+                                "CompuTech"         -> "🖥️"
+                                else                -> "🏪"
+                            }
+                            val logoBg = when (negocio.nombre) {
+                                "Carpintería López" -> listOf(Color(0xFF8B6914), Color(0xFFC8960A))
+                                "Muebles Alta"      -> listOf(Color(0xFF37474F), Color(0xFF78909C))
+                                "CompuTech"         -> listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62))
+                                else                -> listOf(Blue800, Blue700)
+                            }
                             Box(
                                 modifier = Modifier.size(52.dp).clip(CircleShape)
-                                    .background(Color.White).border(2.dp, DividerColor, CircleShape),
+                                    .background(
+                                        Brush.linearGradient(logoBg,
+                                            androidx.compose.ui.geometry.Offset(0f, 0f),
+                                            androidx.compose.ui.geometry.Offset(60f, 60f))
+                                    ).border(2.dp, DividerColor, CircleShape),
                                 contentAlignment = Alignment.Center
-                            ) {
-                                if (negocio.logo != null) {
-                                    Image(
-                                        painter = painterResource(negocio.logo),
-                                        contentDescription = "Logo ${negocio.nombre}",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize().clip(CircleShape)
-                                    )
-                                } else {
-                                    val logoEmoji = when (negocio.nombre) {
-                                        "Carpintería López" -> "🪚"
-                                        "Muebles Alta"      -> "🛋️"
-                                        "CompuTech"         -> "🖥️"
-                                        else                -> "🏪"
-                                    }
-                                    val logoBg = when (negocio.nombre) {
-                                        "Carpintería López" -> listOf(Color(0xFF8B6914), Color(0xFFC8960A))
-                                        "Muebles Alta"      -> listOf(Color(0xFF37474F), Color(0xFF78909C))
-                                        "CompuTech"         -> listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62))
-                                        else -> listOf(Blue800, Blue700)
-                                    }
-                                    Box(
-                                        modifier = Modifier.fillMaxSize().clip(CircleShape).background(
-                                            Brush.linearGradient(logoBg,
-                                                androidx.compose.ui.geometry.Offset(0f, 0f),
-                                                androidx.compose.ui.geometry.Offset(60f, 60f))
-                                        ),
-                                        contentAlignment = Alignment.Center
-                                    ) { Text(logoEmoji, fontSize = 24.sp) }
-                                }
-                            }
+                            ) { Text(logoEmoji, fontSize = 24.sp) }
 
-                            // Nombre + verificado
                             Row(
                                 modifier = Modifier.weight(1f),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -242,7 +232,6 @@ fun TiendaScreen(
                                 }
                             }
 
-                            // Botón guardar
                             Box(
                                 modifier = Modifier.size(36.dp).clip(CircleShape)
                                     .background(BlueLight).border(1.5.dp, BlueBorder, CircleShape),
@@ -254,15 +243,11 @@ fun TiendaScreen(
                         }
 
                         Spacer(Modifier.height(10.dp))
-
-                        // Tags
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             TagChip(negocio.categoria)
                         }
-
                         Spacer(Modifier.height(12.dp))
 
-                        // Stats con misma altura
                         Row(
                             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -270,7 +255,7 @@ fun TiendaScreen(
                             StatChip(
                                 label = "Calificación ★",
                                 value = "${negocio.promCalificacion}",
-                                sub = "(${negocio.totalResenas} reseñas)",
+                                sub   = "(${negocio.totalResenas} reseñas)",
                                 modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                             StatChip(label = "Servicios",  value = "203",     modifier = Modifier.weight(1f).fillMaxHeight())
@@ -280,15 +265,15 @@ fun TiendaScreen(
                 }
             }
 
-            // ── Sobre nosotros ────────────────────────
+            // ── Sobre nosotros
             item {
                 SectionCard(titulo = "Sobre nosotros") {
-                    Text(text = negocio.descripcion, fontFamily = Nunito, fontWeight = FontWeight.SemiBold,
+                    Text(negocio.descripcion, fontFamily = Nunito, fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp, color = Color(0xFF555555), lineHeight = 20.sp)
                 }
             }
 
-            // ── Título "Publicaciones" fuera del marco ──
+            // ── Título publicaciones
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -305,7 +290,6 @@ fun TiendaScreen(
                 }
             }
 
-            // ── Lista de publicaciones desde el repositorio ──
             items(publicaciones) { pub ->
                 PublicacionTiendaCard(pub)
             }
@@ -325,7 +309,7 @@ fun TagChip(texto: String, isGreen: Boolean = false) {
             .background(if (isGreen) Color(0xFFE8F5E9) else BlueLight)
             .padding(horizontal = 10.dp, vertical = 3.dp)
     ) {
-        Text(text = texto, fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 10.sp,
+        Text(texto, fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 10.sp,
             color = if (isGreen) Blue700 else Blue800)
     }
 }
@@ -341,13 +325,13 @@ fun StatChip(label: String, value: String, sub: String? = null, modifier: Modifi
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = label, fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 9.sp,
+        Text(label, fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 9.sp,
             color = TextMuted, textAlign = TextAlign.Center, lineHeight = 13.sp)
         Spacer(Modifier.height(3.dp))
-        Text(text = value, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp,
+        Text(value, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp,
             color = TextPrimary, textAlign = TextAlign.Center)
         if (sub != null) {
-            Text(text = sub, fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 9.sp,
+            Text(sub, fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 9.sp,
                 color = TextMuted, textAlign = TextAlign.Center, lineHeight = 13.sp)
         }
     }
@@ -362,8 +346,11 @@ fun SectionCard(titulo: String, linkText: String? = null, content: @Composable C
             .background(Color.White)
             .padding(16.dp)
     ) {
-        Row(modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Blue800))
                 Text(titulo, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = TextPrimary)
@@ -408,9 +395,7 @@ fun PublicacionTiendaCard(pub: Publicacion) {
                     androidx.compose.ui.geometry.Offset(0f, 0f),
                     androidx.compose.ui.geometry.Offset(100f, 100f))),
             contentAlignment = Alignment.Center
-        ) {
-            Text(emoji, fontSize = 30.sp)
-        }
+        ) { Text(emoji, fontSize = 30.sp) }
 
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp).weight(1f)
@@ -432,25 +417,20 @@ fun PublicacionTiendaCard(pub: Publicacion) {
                     fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp, color = Blue800
                 )
+                val esServicio = pub.tipo == "SERVICIO"
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(if (pub.tipo == TipoPublicacion.SERVICIO) Color(0xFFFFF3E0) else BlueLight)
+                        .background(if (esServicio) Color(0xFFFFF3E0) else BlueLight)
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = if (pub.tipo == TipoPublicacion.SERVICIO) "Servicio" else "Producto",
+                        text = if (esServicio) "Servicio" else "Producto",
                         fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 9.sp,
-                        color = if (pub.tipo == TipoPublicacion.SERVICIO) Color(0xFFE65100) else Blue800
+                        color = if (esServicio) Color(0xFFE65100) else Blue800
                     )
                 }
             }
         }
     }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun TiendaScreenPreview() {
-    TiendaScreen()
 }

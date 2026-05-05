@@ -1,41 +1,24 @@
 package com.example.rebuska.data.repository
 
 import com.example.rebuska.data.model.Usuario
+import com.example.rebuska.data.remote.FirestoreService
 
 object UsuarioRepository {
 
-    private var usuarioActual: Usuario = Usuario.Trabajador(
-        id = 1,
-        nombre = "Carlos",
-        apellido = "López",
-        cedula = "1098765432",
-        email = "carlos.lopez@gmail.com",
-        telefono = "3001234567",
-        fechaRegistro = System.currentTimeMillis(),
-        negocios = listOf("1"),
-        verificado = true
-    )
+    suspend fun getUsuarioActual(): Result<Usuario> =
+        FirestoreService.getUsuarioActual()
 
-    fun getUsuarioActual(): Usuario = usuarioActual
+    suspend fun crearUsuario(usuario: Usuario): Result<Unit> =
+        FirestoreService.crearUsuario(usuario)
 
-    fun actualizarNombre(nuevoNombre: String, nuevoApellido: String) {
-        usuarioActual = when (val u = usuarioActual) {
-            is Usuario.Cliente    -> u.copy(nombre = nuevoNombre, apellido = nuevoApellido)
-            is Usuario.Trabajador -> u.copy(nombre = nuevoNombre, apellido = nuevoApellido)
-        }
-    }
+    suspend fun actualizarNombre(nuevoNombre: String, nuevoApellido: String): Result<Unit> =
+        FirestoreService.actualizarUsuario(
+            mapOf("nombre" to nuevoNombre, "apellido" to nuevoApellido)
+        )
 
-    fun actualizarEmail(nuevoEmail: String) {
-        usuarioActual = when (val u = usuarioActual) {
-            is Usuario.Cliente    -> u.copy(email = nuevoEmail)
-            is Usuario.Trabajador -> u.copy(email = nuevoEmail)
-        }
-    }
+    suspend fun actualizarEmail(nuevoEmail: String): Result<Unit> =
+        FirestoreService.actualizarUsuario(mapOf("email" to nuevoEmail))
 
-    fun actualizarTelefono(nuevoTelefono: String) {
-        usuarioActual = when (val u = usuarioActual) {
-            is Usuario.Cliente    -> u.copy(telefono = nuevoTelefono)
-            is Usuario.Trabajador -> u.copy(telefono = nuevoTelefono)
-        }
-    }
+    suspend fun actualizarTelefono(nuevoTelefono: String): Result<Unit> =
+        FirestoreService.actualizarUsuario(mapOf("telefono" to nuevoTelefono))
 }

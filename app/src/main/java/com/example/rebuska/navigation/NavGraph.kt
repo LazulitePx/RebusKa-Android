@@ -38,7 +38,7 @@ object Rutas {
 
 
     // Función helper
-    fun tiendaRuta(id: Int) = "tienda/$id"
+    fun tiendaRuta(id: String) = "tienda/$id"
     fun empresaRuta(id: Int) = "empresa/$id"
 }
 
@@ -158,18 +158,17 @@ fun AppNavigation(
         composable(
             route = Rutas.TIENDA,
             arguments = listOf(
-                navArgument("idNegocio") { type = NavType.IntType }
+                navArgument("idNegocio") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            // Extrae el ID de la URL
-            val idNegocio = backStackEntry.arguments?.getInt("idNegocio") ?: 1
+            val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: ""
+            android.util.Log.d("NAVEGACION", "idNegocio recibido: '$idNegocio'")
             TiendaScreen(
                 idNegocio = idNegocio,
                 onAtras   = { navController.popBackStack() },
                 onHome    = { navController.navigate(Rutas.HOME) },
                 onChats   = { navController.navigate(Rutas.LOGIN) },
                 onPerfil  = { navController.navigate(Rutas.PERFIL) }
-
             )
         }
         composable(Rutas.MENSAJES) {

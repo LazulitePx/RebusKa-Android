@@ -19,17 +19,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rebuska.R
+import com.example.rebuska.data.model.Negocio
 import com.example.rebuska.data.model.Publicacion
-import com.example.rebuska.data.model.TipoPublicacion
-import com.example.rebuska.data.repository.NegocioRepository
-import com.example.rebuska.data.repository.PublicacionRepository
 import com.example.rebuska.ui.components.BottomNavBar
 import com.example.rebuska.ui.components.NavDestino
 import com.example.rebuska.ui.theme.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 data class Categoria(val emoji: String, val nombre: String)
 
@@ -44,21 +43,27 @@ val categorias = listOf(
 
 @Composable
 fun HomeScreen(
-    onVerTienda: (idNegocio: Int) -> Unit = {},
+    onVerTienda: (idNegocio: String) -> Unit = {},
     onVerCategorias: () -> Unit = {},
     onPerfil: () -> Unit = {},
     onChats: () -> Unit = {},
-    onLogin: () -> Unit = {}
+    onLogin: () -> Unit = {},
+    viewModel: HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     var busqueda by remember { mutableStateOf("") }
-    val negocios = remember { NegocioRepository.getNegocios() }
+    val uiState by viewModel.uiState.collectAsState()
+
+    val negocios = when (val s = uiState) {
+        is HomeUiState.Exito -> s.negocios
+        else -> emptyList()
+    }
 
     Scaffold(
         bottomBar = {
             BottomNavBar(
                 seleccionado = NavDestino.HOME,
                 onHome   = {},
-                onChats  = onChats,   // 🔥 importante
+                onChats  = onChats,
                 onLogo   = onLogin,
                 onPerfil = onPerfil,
                 onMenu   = {}
@@ -72,8 +77,7 @@ fun HomeScreen(
                 .background(Color(0xFFF2F4F8))
                 .padding(innerPadding)
         ) {
-
-            // ── Header azul  ──────────────
+            // ── Header azul
             item {
                 Box(
                     modifier = Modifier
@@ -85,14 +89,12 @@ fun HomeScreen(
                                 androidx.compose.ui.geometry.Offset(400f, 300f)
                             )
                         )
-
                         .padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 12.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Buscador
                         OutlinedTextField(
                             value = busqueda,
                             onValueChange = { busqueda = it },
@@ -104,40 +106,31 @@ fun HomeScreen(
                                 )
                             },
                             leadingIcon = {
-                                Icon(
-                                    painterResource(R.drawable.ic_search), null,
-                                    tint = Color(0xFFAAAAAA), modifier = Modifier.size(18.dp)
-                                )
+                                Icon(painterResource(R.drawable.ic_search), null,
+                                    tint = Color(0xFFAAAAAA), modifier = Modifier.size(18.dp))
                             },
                             singleLine = true,
                             modifier = Modifier.weight(1f).height(56.dp),
                             shape = RoundedCornerShape(50.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor   = Color.Transparent,
-                                unfocusedBorderColor = Color.Transparent,
+                                focusedBorderColor      = Color.Transparent,
+                                unfocusedBorderColor    = Color.Transparent,
                                 focusedContainerColor   = Color.White,
                                 unfocusedContainerColor = Color.White,
                                 cursorColor = Blue800
                             )
                         )
-                        // Campana de notificaciones
                         Box(contentAlignment = Alignment.TopEnd) {
                             Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
+                                modifier = Modifier.size(40.dp).clip(CircleShape)
                                     .background(Color.White.copy(alpha = 0.18f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_notifications), null,
-                                    tint = Color.White, modifier = Modifier.size(20.dp)
-                                )
+                                Icon(painterResource(R.drawable.ic_notifications), null,
+                                    tint = Color.White, modifier = Modifier.size(20.dp))
                             }
                             Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clip(CircleShape)
+                                modifier = Modifier.size(16.dp).clip(CircleShape)
                                     .background(Color(0xFFE53935))
                                     .offset(x = 2.dp, y = (-2).dp),
                                 contentAlignment = Alignment.Center
@@ -150,11 +143,27 @@ fun HomeScreen(
                 }
             }
 
-            // ── Banner promocional ────────────────────
+            // ── Estado de carga / error
+            when (val s = uiState) {
+                is HomeUiState.Cargando -> item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Blue800)
+                    }
+                }
+                is HomeUiState.Error -> item {
+                    Text(
+                        text = "⚠️ ${s.mensaje}",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                else -> {}
+            }
+
+            // ── Banner promocional
             item {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                         .padding(horizontal = 14.dp, vertical = 14.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(Color(0xFFFF8E27))
@@ -165,15 +174,12 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "¡La solución\na tu alcance!",
-                                fontFamily = Nunito, fontWeight = FontWeight.Black,
-                                fontSize = 20.sp, color = Color.White, lineHeight = 25.sp
-                            )
+                            Text("¡La solución\na tu alcance!", fontFamily = Nunito,
+                                fontWeight = FontWeight.Black, fontSize = 20.sp,
+                                color = Color.White, lineHeight = 25.sp)
                             Spacer(Modifier.height(12.dp))
                             Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(50.dp))
+                                modifier = Modifier.clip(RoundedCornerShape(50.dp))
                                     .background(Blue800)
                                     .padding(horizontal = 16.dp, vertical = 7.dp)
                             ) {
@@ -191,7 +197,7 @@ fun HomeScreen(
                 }
             }
 
-            // ── Categorías ────────────────────────────
+            // ── Categorías
             item {
                 Column(modifier = Modifier.padding(horizontal = 14.dp)) {
                     Row(
@@ -209,9 +215,11 @@ fun HomeScreen(
                     Spacer(Modifier.height(10.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         items(categorias) { cat ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(68.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.width(68.dp)) {
                                 Box(
-                                    modifier = Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)).background(Color.White),
+                                    modifier = Modifier.size(56.dp)
+                                        .clip(RoundedCornerShape(16.dp)).background(Color.White),
                                     contentAlignment = Alignment.Center
                                 ) { Text(cat.emoji, fontSize = 24.sp) }
                                 Spacer(Modifier.height(6.dp))
@@ -224,29 +232,21 @@ fun HomeScreen(
                 }
             }
 
-            // ── Título ofertas ────────────────────────
+            // ── Título ofertas
             item {
                 Text("Ofertas disponibles", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                    fontSize = 17.sp, color = TextPrimary, modifier = Modifier.padding(horizontal = 14.dp))
+                    fontSize = 17.sp, color = TextPrimary,
+                    modifier = Modifier.padding(horizontal = 14.dp))
                 Spacer(Modifier.height(12.dp))
             }
 
-            // ── 1 card por negocio ────────────────────
+            // ── Cards de negocios desde Firestore
             items(negocios) { negocio ->
-                val primeraPublicacion = PublicacionRepository
-                    .getPublicacionesByNegocio(negocio.id)
-                    .firstOrNull()
-
-                if (primeraPublicacion != null) {
-                    PublicacionCardHome(
-                        publicacion      = primeraPublicacion,
-                        negocioNombre    = negocio.nombre,
-                        negocioCategoria = negocio.categoria,
-                        banner           = negocio.banner,
-                        esPopular        = negocio.id == 1,
-                        onClick          = { onVerTienda(negocio.id) }
-                    )
-                }
+                PublicacionCardHome(
+                    negocio   = negocio,
+                    esPopular = negocio.promCalificacion >= 4.7f,
+                    onClick   = { onVerTienda(negocio.id) }
+                )
             }
 
             item { Spacer(Modifier.height(12.dp)) }
@@ -254,24 +254,19 @@ fun HomeScreen(
     }
 }
 
-// ── Card de negocio en el Home ────────────────────────
-
 @Composable
 fun PublicacionCardHome(
-    publicacion: Publicacion,
-    negocioNombre: String,
-    negocioCategoria: String,
-    banner: Int?,
+    negocio: Negocio,
     esPopular: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-    val bannerColors = when (negocioNombre) {
+    val bannerColors = when (negocio.nombre) {
         "Carpintería López" -> listOf(Color(0xFF5D4037), Color(0xFF8D6E63))
         "Muebles Alta"      -> listOf(Color(0xFF37474F), Color(0xFF78909C))
         "CompuTech"         -> listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62))
         else                -> listOf(Blue800, Blue700)
     }
-    val bannerEmoji = when (negocioNombre) {
+    val bannerEmoji = when (negocio.nombre) {
         "Carpintería López" -> "🪚"
         "Muebles Alta"      -> "🛋️"
         "CompuTech"         -> "🖥️"
@@ -287,14 +282,16 @@ fun PublicacionCardHome(
     ) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(155.dp)) {
-                if (banner != null) {
-                    Image(
-                        painter = painterResource(banner),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                            .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
-                    )
+                if (negocio.bannerUrl.isNotEmpty()) {
+                    // Cuando integremos Coil para cargar imágenes de URL irá aquí
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(
+                            Brush.linearGradient(bannerColors,
+                                androidx.compose.ui.geometry.Offset(0f, 0f),
+                                androidx.compose.ui.geometry.Offset(600f, 300f))
+                        ),
+                        contentAlignment = Alignment.Center
+                    ) { Text(bannerEmoji, fontSize = 60.sp) }
                 } else {
                     Box(
                         modifier = Modifier.fillMaxSize().background(
@@ -321,9 +318,9 @@ fun PublicacionCardHome(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(negocioNombre, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
+                    Text(negocio.nombre, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
                         fontSize = 14.sp, color = TextPrimary)
-                    Text("$negocioCategoria · ${publicacion.categoria}", fontFamily = Nunito,
+                    Text(negocio.categoria, fontFamily = Nunito,
                         fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = TextMuted)
                 }
                 Box(
@@ -332,10 +329,7 @@ fun PublicacionCardHome(
                         .padding(horizontal = 12.dp, vertical = 5.dp)
                 ) {
                     Text(
-                        text = when (publicacion.tipo) {
-                            TipoPublicacion.PRODUCTO -> "Producto"
-                            TipoPublicacion.SERVICIO -> "Servicio"
-                        },
+                        text = negocio.categoria,
                         fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
                         fontSize = 11.sp, color = Blue800
                     )
@@ -343,10 +337,4 @@ fun PublicacionCardHome(
             }
         }
     }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen()
 }
