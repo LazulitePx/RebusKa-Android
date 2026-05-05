@@ -1,45 +1,56 @@
 package com.example.rebuska.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
 import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.rebuska.ui.screens.LoginScreen
-import com.example.rebuska.ui.screens.RegistroRolScreen
-import com.example.rebuska.ui.screens.SplashScreen
-import com.example.rebuska.ui.screens.Registro1Screen
-import com.example.rebuska.ui.screens.Registro2Screen
-import com.example.rebuska.ui.screens.VerificacionEmailScreen
-import com.example.rebuska.ui.screens.VerificacionTelefonoScreen
 import com.example.rebuska.ui.screens.HomeScreen
+import com.example.rebuska.ui.screens.SplashScreen
 import com.example.rebuska.ui.screens.TiendaScreen
+import com.example.rebuska.ui.screens.login.LoginScreen
+import com.example.rebuska.ui.screens.login.Registro1Screen
+import com.example.rebuska.ui.screens.login.Registro2Screen
+import com.example.rebuska.ui.screens.login.RegistroRolScreen
 import com.example.rebuska.ui.screens.mensajes.ChatScreen
 import com.example.rebuska.ui.screens.mensajes.MensajesScreen
-import com.example.rebuska.ui.screens.perfil.ProfileScreenEdit
 import com.example.rebuska.ui.screens.perfil.ProfileScreen
+import com.example.rebuska.ui.screens.perfil.ProfileScreenEdit
+import com.example.rebuska.ui.screens.verificacion.VerificacionEmailScreen
+import com.example.rebuska.ui.screens.verificacion.VerificacionTelefonoScreen
+import com.example.rebuska.ui.viewmodel.LoginViewModel
+import com.example.rebuska.ui.viewmodel.RegistroViewModel
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import com.example.rebuska.ui.viewmodel.NegocioViewModel
+import com.example.rebuska.ui.screens.negocio.NegocioFormScreen
 
 object Rutas {
-    const val SPLASH               = "splash"
-    const val LOGIN                = "login"
-    const val REGISTRO_ROL         = "registro_rol"
-    const val HOME                 = "home"
-    const val REGISTRO_1           = "registro_1"
-    const val REGISTRO_2           = "registro_2"
-    const val VERIFICACION_EMAIL   = "verificacion_email"
-    const val VERIFICACION_TELEFONO = "verificacion_telefono"
-    const val TIENDA = "tienda/{idNegocio}"
-    const val MENSAJES = "mensajes"
-    const val CHAT = "chat/{nombre}"
-    const val PERFIL = "perfil"
-    const val EMPRESA = "empresa/{id}"
+    const val SPLASH                = "splash"
+    const val LOGIN                 = "login"
+    const val REGISTRO_ROL          = "registro_rol"
+    const val REGISTRO_1            = "registro_1"
+    const val REGISTRO_2            = "registro_2"
+    const val VERIFICACION_EMAIL    = "verificacion_email/{telefono}"
+    const val VERIFICACION_TELEFONO = "verificacion_telefono/{telefono}"
+    const val HOME                  = "home"
+    const val TIENDA                = "tienda/{idNegocio}"
+    const val MENSAJES              = "mensajes"
+    const val CHAT                  = "chat/{chatId}"
+    const val PERFIL                = "perfil"
+    const val NEGOCIO = "com/example/rebuska/ui/screens/negocio/{id}"
 
-
-    // Función helper
-    fun tiendaRuta(id: String) = "tienda/$id"
-    fun empresaRuta(id: Int) = "empresa/$id"
+    fun verificacionEmailRuta(telefono: String)    = "verificacion_email/$telefono"
+    fun verificacionTelefonoRuta(telefono: String) = "verificacion_telefono/$telefono"
+    fun tiendaRuta(id: String)  = "tienda/$id"
+    fun negocioRuta(id: String) = "negocio/$id"
 }
 
 @Composable
@@ -51,9 +62,11 @@ fun AppNavigation(
         startDestination = Rutas.SPLASH
     ) {
 
+        // ── SPLASH ────────────────────────────────────────
         composable(Rutas.SPLASH) {
             SplashScreen(
                 onSplashFinished = {
+                    // Siempre va al HOME — el HOME decide si hay sesión
                     navController.navigate(Rutas.HOME) {
                         popUpTo(Rutas.SPLASH) { inclusive = true }
                     }
@@ -61,25 +74,53 @@ fun AppNavigation(
             )
         }
 
-        composable(Rutas.LOGIN) {
-            LoginScreen(
-                onLoginExitoso = {
-                    navController.navigate(Rutas.HOME) {
-                        popUpTo(Rutas.LOGIN) { inclusive = true }
+        // ── HOME ──────────────────────────────────────────
+        composable(Rutas.HOME) {
+            val haySesion = Firebase.auth.currentUser != null
+            HomeScreen(
+                onVerTienda = { id -> navController.navigate(Rutas.tiendaRuta(id)) },
+                onLogin = {
+                    if (!haySesion) {
+                        navController.navigate(Rutas.LOGIN)
                     }
+                    // si hay sesión el botón no hace nada
                 },
-                onRegistrarse = {
-                    navController.navigate(Rutas.REGISTRO_ROL)
-                }
+                onChats  = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil = { navController.navigate(Rutas.PERFIL) }
             )
         }
 
-        composable(Rutas.REGISTRO_ROL) {
-            RegistroRolScreen(
-                onContinuar = {
-                    navController.navigate(Rutas.REGISTRO_1) {
-                        popUpTo(Rutas.REGISTRO_ROL) { inclusive = true }
+        // ── LOGIN ─────────────────────────────────────────
+        composable(Rutas.LOGIN) {
+            val viewModel: LoginViewModel = viewModel()
+            val cargando by viewModel.cargando.observeAsState(false)
+            val errorMsg by viewModel.error.observeAsState(null)
+            val exitoso  by viewModel.loginExitoso.observeAsState(false)
+
+            LaunchedEffect(exitoso) {
+                if (exitoso) {
+                    navController.navigate(Rutas.HOME) {
+                        popUpTo(Rutas.HOME) { inclusive = false }
                     }
+                }
+            }
+
+            LoginScreen(
+                onLoginExitoso = { email, password -> viewModel.iniciarSesion(email, password) },
+                cargando       = cargando,
+                errorMsg       = errorMsg,
+                onRegistrarse  = { navController.navigate(Rutas.REGISTRO_ROL) },
+                onBack         = { navController.popBackStack() }
+            )
+        }
+
+        // ── REGISTRO ROL ──────────────────────────────────
+        composable(Rutas.REGISTRO_ROL) { entry ->
+            val viewModel: RegistroViewModel = viewModel(entry)
+            RegistroRolScreen(
+                onContinuar = { rol ->
+                    viewModel.rol = rol
+                    navController.navigate(Rutas.REGISTRO_1)
                 },
                 onIniciarSesion = {
                     navController.navigate(Rutas.LOGIN) {
@@ -90,120 +131,132 @@ fun AppNavigation(
             )
         }
 
-        composable(Rutas.REGISTRO_1) {
+        // ── REGISTRO PASO 1 ───────────────────────────────
+        composable(Rutas.REGISTRO_1) { entry ->
+            val parentEntry = remember(entry) {
+                navController.getBackStackEntry(Rutas.REGISTRO_ROL)
+            }
+            val viewModel: RegistroViewModel = viewModel(parentEntry)
             Registro1Screen(
-                onContinuar = { _, _, _ ->
+                onContinuar = { nombre, apellido, email ->
+                    viewModel.nombre   = nombre
+                    viewModel.apellido = apellido
+                    viewModel.email    = email
                     navController.navigate(Rutas.REGISTRO_2)
                 },
-                onIniciarSesion = {
-                    navController.navigate(Rutas.LOGIN)
-                },
-                onBack = { navController.navigate(Rutas.REGISTRO_ROL) }
+                onIniciarSesion = { navController.navigate(Rutas.LOGIN) },
+                onBack          = { navController.popBackStack() }
             )
         }
 
-        composable(Rutas.REGISTRO_2) {
-            Registro2Screen(
-                onCrearCuenta = {
-                    navController.navigate(Rutas.VERIFICACION_EMAIL) {
-                        popUpTo(Rutas.SPLASH) { inclusive = true }
+        // ── REGISTRO PASO 2 ───────────────────────────────
+        composable(Rutas.REGISTRO_2) { entry ->
+            val parentEntry = remember(entry) {
+                navController.getBackStackEntry(Rutas.REGISTRO_ROL)
+            }
+            val viewModel: RegistroViewModel = viewModel(parentEntry)
+            val cargando by viewModel.cargando.observeAsState(false)
+            val errorMsg by viewModel.error.observeAsState(null)
+            val exitoso  by viewModel.registroExitoso.observeAsState(false)
+
+            LaunchedEffect(exitoso) {
+                if (exitoso) {
+                    navController.navigate(Rutas.verificacionEmailRuta(viewModel.telefono)) {
+                        popUpTo(Rutas.REGISTRO_ROL) { inclusive = true }
                     }
+                }
+            }
+
+            Registro2Screen(
+                onCrearCuenta = { cedula, celular, password ->
+                    viewModel.cedula   = cedula
+                    viewModel.telefono = celular
+                    viewModel.password = password
+                    viewModel.registrar()
                 },
-                onIniciarSesion = {
-                    navController.navigate(Rutas.LOGIN)
-                },
-                onBack = { navController.navigate(Rutas.REGISTRO_1) }
+                cargando        = cargando,
+                errorMsg        = errorMsg,
+                onIniciarSesion = { navController.navigate(Rutas.LOGIN) },
+                onBack          = { navController.popBackStack() }
             )
         }
 
-        composable(Rutas.VERIFICACION_EMAIL) {
+        // ── VERIFICACIÓN EMAIL ────────────────────────────
+        composable(
+            route     = Rutas.VERIFICACION_EMAIL,
+            arguments = listOf(navArgument("telefono") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val telefono = backStackEntry.arguments?.getString("telefono") ?: ""
             VerificacionEmailScreen(
                 onVerificar = {
-                    navController.navigate(Rutas.VERIFICACION_TELEFONO)
+                    navController.navigate(Rutas.verificacionTelefonoRuta(telefono))
                 }
             )
         }
 
-        composable(Rutas.VERIFICACION_TELEFONO) {
-            VerificacionTelefonoScreen(
-                onVerificar = {
-                    navController.navigate(Rutas.HOME) {
-                        popUpTo(Rutas.SPLASH) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(Rutas.HOME) {
-            HomeScreen(
-                onVerTienda = { id ->
-                    // Navega a tienda/1, tienda/2, tienda/3 según el negocio tocado
-                    navController.navigate(Rutas.tiendaRuta(id))
-                },
-                onLogin = {
-                    navController.navigate(Rutas.LOGIN) {
-                        popUpTo(Rutas.HOME) { inclusive = true }
-                    }
-                },
-                onChats = {
-                    navController.navigate(Rutas.MENSAJES)
-
-                },
-                onPerfil = {
-                    navController.navigate(Rutas.PERFIL)
-                }
-            )
-        }
-
+        // ── VERIFICACIÓN TELÉFONO ─────────────────────────
         composable(
-            route = Rutas.TIENDA,
-            arguments = listOf(
-                navArgument("idNegocio") { type = NavType.StringType }
+            route     = Rutas.VERIFICACION_TELEFONO,
+            arguments = listOf(navArgument("telefono") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val telefono = backStackEntry.arguments?.getString("telefono") ?: ""
+            VerificacionTelefonoScreen(
+                telefono     = telefono,
+                onVerificado = {
+                    navController.navigate(Rutas.HOME) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
+        }
+
+        // ── TIENDA ────────────────────────────────────────
+        composable(
+            route     = Rutas.TIENDA,
+            arguments = listOf(navArgument("idNegocio") { type = NavType.StringType })
         ) { backStackEntry ->
             val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: ""
-            android.util.Log.d("NAVEGACION", "idNegocio recibido: '$idNegocio'")
             TiendaScreen(
-                idNegocio = idNegocio,
-                onAtras   = { navController.popBackStack() },
-                onHome    = { navController.navigate(Rutas.HOME) },
-                onChats   = { navController.navigate(Rutas.LOGIN) },
-                onPerfil  = { navController.navigate(Rutas.PERFIL) }
+                idNegocio   = idNegocio,
+                onAtras     = { navController.popBackStack() },
+                onContratar = { chatId -> navController.navigate("chat/$chatId") },
+                onHome      = { navController.navigate(Rutas.HOME) },
+                onChats     = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil    = { navController.navigate(Rutas.PERFIL) }
             )
         }
+
+        // ── MENSAJES ──────────────────────────────────────
         composable(Rutas.MENSAJES) {
             MensajesScreen(navController)
         }
 
+        // ── CHAT ──────────────────────────────────────────
         composable(
-            route = Rutas.CHAT,
-            arguments = listOf(
-                navArgument("nombre") { type = NavType.StringType }
-            )
+            route     = Rutas.CHAT,
+            arguments = listOf(navArgument("chatId") { type = NavType.StringType })
         ) { backStackEntry ->
-
-            val nombre = backStackEntry.arguments?.getString("nombre") ?: ""
-
-            ChatScreen(
-                nombre = nombre,
-                onBack = { navController.popBackStack() }
-            )
+            val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
+            ChatScreen(chatId = chatId, onBack = { navController.popBackStack() })
         }
-        //ruta de perfil
+
+        // ── PERFIL ────────────────────────────────────────
         composable(Rutas.PERFIL) {
             ProfileScreen(navController)
         }
-        //ruta editar perfil
+
+        // ── NEGOCIO ───────────────────────────────────────
         composable(
-            route = Rutas.EMPRESA,
-            arguments = listOf(
-                navArgument("id") { type = NavType.IntType }
-            )
-        ){ backStackEntry ->
-            val empresaId = backStackEntry.arguments?.getInt("id") ?: 0
-            ProfileScreenEdit(navController, empresaId)
-
+            route     = Rutas.NEGOCIO,
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val negocioId = backStackEntry.arguments?.getString("id") ?: ""
+            ProfileScreenEdit(navController, negocioId.toIntOrNull() ?: 0)
         }
-
+        composable("negocioForm") {
+            val viewModel: NegocioViewModel = viewModel()
+            NegocioFormScreen(viewModel, onBack = { navController.popBackStack() })
+        }
     }
+
 }

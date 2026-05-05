@@ -20,6 +20,8 @@ import com.example.rebuska.ui.components.NavDestino
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 
 @Composable
 fun ProfileScreen(navController: NavHostController) {
@@ -139,6 +141,32 @@ fun ProfileScreen(navController: NavHostController) {
                         OpcionPerfil(texto = "Mi cuenta", icono = "👤")
                         HorizontalDivider(color = Color(0xFFEEEEEE))
                         OpcionPerfil(texto = "Mis negocios", icono = "🏪")
+
+// ── Botón "Nueva" ────────────────────────────────
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = { navController.navigate("negocioForm") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .padding(horizontal = 16.dp),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Nueva",
+                                tint = Color.White
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Nueva",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
+
                         HorizontalDivider(color = Color(0xFFEEEEEE))
                         OpcionPerfil(texto = "Mis publicaciones", icono = "📋")
                         HorizontalDivider(color = Color(0xFFEEEEEE))

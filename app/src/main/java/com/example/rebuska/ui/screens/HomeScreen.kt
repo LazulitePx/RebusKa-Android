@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -21,14 +22,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rebuska.R
 import com.example.rebuska.data.model.Negocio
-import com.example.rebuska.data.model.Publicacion
 import com.example.rebuska.ui.components.BottomNavBar
 import com.example.rebuska.ui.components.NavDestino
 import com.example.rebuska.ui.theme.*
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import com.example.rebuska.viewmodel.HomeUiState
+import com.example.rebuska.viewmodel.HomeViewModel
+import coil.compose.AsyncImage
 
 data class Categoria(val emoji: String, val nombre: String)
 
@@ -48,7 +50,7 @@ fun HomeScreen(
     onPerfil: () -> Unit = {},
     onChats: () -> Unit = {},
     onLogin: () -> Unit = {},
-    viewModel: HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: HomeViewModel = viewModel()
 ) {
     var busqueda by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsState()
@@ -77,6 +79,7 @@ fun HomeScreen(
                 .background(Color(0xFFF2F4F8))
                 .padding(innerPadding)
         ) {
+
             // ── Header azul
             item {
                 Box(
@@ -85,8 +88,7 @@ fun HomeScreen(
                         .background(
                             Brush.linearGradient(
                                 listOf(Blue800, Blue700, Blue400),
-                                androidx.compose.ui.geometry.Offset(0f, 0f),
-                                androidx.compose.ui.geometry.Offset(400f, 300f)
+                                Offset(0f, 0f), Offset(400f, 300f)
                             )
                         )
                         .padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 12.dp)
@@ -99,11 +101,9 @@ fun HomeScreen(
                             value = busqueda,
                             onValueChange = { busqueda = it },
                             placeholder = {
-                                Text(
-                                    "Buscar producto o servicio...",
+                                Text("Buscar producto o servicio...",
                                     fontFamily = Nunito, fontWeight = FontWeight.SemiBold,
-                                    fontSize = 13.sp, color = Color(0xFFAAAAAA)
-                                )
+                                    fontSize = 13.sp, color = Color(0xFFAAAAAA))
                             },
                             leadingIcon = {
                                 Icon(painterResource(R.drawable.ic_search), null,
@@ -143,19 +143,17 @@ fun HomeScreen(
                 }
             }
 
-            // ── Estado de carga / error
+            // ── Estado cargando / error
             when (val s = uiState) {
                 is HomeUiState.Cargando -> item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp),
+                        contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = Blue800)
                     }
                 }
                 is HomeUiState.Error -> item {
-                    Text(
-                        text = "⚠️ ${s.mensaje}",
-                        color = Color.Red,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    Text("⚠️ ${s.mensaje}", color = Color.Red,
+                        modifier = Modifier.padding(16.dp))
                 }
                 else -> {}
             }
@@ -184,7 +182,8 @@ fun HomeScreen(
                                     .padding(horizontal = 16.dp, vertical = 7.dp)
                             ) {
                                 Text("Buscar ofertas", fontFamily = Nunito,
-                                    fontWeight = FontWeight.ExtraBold, fontSize = 12.sp, color = Color.White)
+                                    fontWeight = FontWeight.ExtraBold, fontSize = 12.sp,
+                                    color = Color.White)
                             }
                         }
                         Image(
@@ -205,11 +204,11 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Categorías", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                            fontSize = 17.sp, color = TextPrimary)
+                        Text("Categorías", fontFamily = Nunito,
+                            fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, color = TextPrimary)
                         TextButton(onClick = onVerCategorias, contentPadding = PaddingValues(0.dp)) {
-                            Text("Ver todas >", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                                fontSize = 12.sp, color = Blue800)
+                            Text("Ver todas >", fontFamily = Nunito,
+                                fontWeight = FontWeight.ExtraBold, fontSize = 12.sp, color = Blue800)
                         }
                     }
                     Spacer(Modifier.height(10.dp))
@@ -219,7 +218,8 @@ fun HomeScreen(
                                 modifier = Modifier.width(68.dp)) {
                                 Box(
                                     modifier = Modifier.size(56.dp)
-                                        .clip(RoundedCornerShape(16.dp)).background(Color.White),
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(Color.White),
                                     contentAlignment = Alignment.Center
                                 ) { Text(cat.emoji, fontSize = 24.sp) }
                                 Spacer(Modifier.height(6.dp))
@@ -234,15 +234,15 @@ fun HomeScreen(
 
             // ── Título ofertas
             item {
-                Text("Ofertas disponibles", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                    fontSize = 17.sp, color = TextPrimary,
+                Text("Ofertas disponibles", fontFamily = Nunito,
+                    fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, color = TextPrimary,
                     modifier = Modifier.padding(horizontal = 14.dp))
                 Spacer(Modifier.height(12.dp))
             }
 
             // ── Cards de negocios desde Firestore
             items(negocios) { negocio ->
-                PublicacionCardHome(
+                NegocioCardHome(
                     negocio   = negocio,
                     esPopular = negocio.promCalificacion >= 4.7f,
                     onClick   = { onVerTienda(negocio.id) }
@@ -255,83 +255,110 @@ fun HomeScreen(
 }
 
 @Composable
-fun PublicacionCardHome(
+fun NegocioCardHome(
     negocio: Negocio,
     esPopular: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-    val bannerColors = when (negocio.nombre) {
-        "Carpintería López" -> listOf(Color(0xFF5D4037), Color(0xFF8D6E63))
-        "Muebles Alta"      -> listOf(Color(0xFF37474F), Color(0xFF78909C))
-        "CompuTech"         -> listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62))
-        else                -> listOf(Blue800, Blue700)
-    }
-    val bannerEmoji = when (negocio.nombre) {
-        "Carpintería López" -> "🪚"
-        "Muebles Alta"      -> "🛋️"
-        "CompuTech"         -> "🖥️"
-        else                -> "📦"
+    val (bannerColors, bannerEmoji) = when (negocio.nombre) {
+        "Carpintería López" -> Pair(listOf(Color(0xFF5D4037), Color(0xFF8D6E63)), "🪚")
+        "Muebles Alta"      -> Pair(listOf(Color(0xFF37474F), Color(0xFF78909C)), "🛋️")
+        "CompuTech"         -> Pair(listOf(Color(0xFF0D0D1A), Color(0xFF0A3D62)), "🖥️")
+        else                -> Pair(listOf(Blue800, Blue700), "📦")
     }
 
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 6.dp),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(155.dp)) {
-                if (negocio.bannerUrl.isNotEmpty()) {
-                    // Cuando integremos Coil para cargar imágenes de URL irá aquí
-                    Box(
-                        modifier = Modifier.fillMaxSize().background(
-                            Brush.linearGradient(bannerColors,
-                                androidx.compose.ui.geometry.Offset(0f, 0f),
-                                androidx.compose.ui.geometry.Offset(600f, 300f))
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(
+                                bannerColors,
+                                start = Offset(0f, 0f),
+                                end = Offset(600f, 300f)
+                            )
                         ),
-                        contentAlignment = Alignment.Center
-                    ) { Text(bannerEmoji, fontSize = 60.sp) }
-                } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize().background(
-                            Brush.linearGradient(bannerColors,
-                                androidx.compose.ui.geometry.Offset(0f, 0f),
-                                androidx.compose.ui.geometry.Offset(600f, 300f))
-                        ),
-                        contentAlignment = Alignment.Center
-                    ) { Text(bannerEmoji, fontSize = 60.sp) }
+                    contentAlignment = Alignment.Center
+                ) {
+                    // si el negocio tiene bannerUrl, mostrar imagen
+                    if (negocio.bannerUrl.isNotEmpty()) {
+                        AsyncImage(
+                            model = negocio.bannerUrl,
+                            contentDescription = "Banner del negocio",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // si no tiene imagen, mostrar emoji (personalizado o 📦)
+                        Text(bannerEmoji, fontSize = 60.sp)
+                    }
                 }
+
                 if (esPopular) {
                     Box(
-                        modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)
-                            .clip(RoundedCornerShape(20.dp)).background(Color(0xFFFFB300))
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFFFB300))
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Text("✨ Popular", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                            fontSize = 10.sp, color = Color.White)
+                        Text(
+                            "✨ Popular",
+                            fontFamily = Nunito,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 10.sp,
+                            color = Color.White
+                        )
                     }
                 }
             }
+            //  informacion del negocio
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(negocio.nombre, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                        fontSize = 14.sp, color = TextPrimary)
-                    Text(negocio.categoria, fontFamily = Nunito,
-                        fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = TextMuted)
+                    Text(
+                        negocio.nombre,
+                        fontFamily = Nunito,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.sp,
+                        color = TextPrimary
+                    )
+                    Text(
+                        negocio.categoria,
+                        fontFamily = Nunito,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = TextMuted
+                    )
                 }
                 Box(
-                    modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(BlueLight)
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(BlueLight)
                         .border(1.dp, BlueBorder, RoundedCornerShape(20.dp))
                         .padding(horizontal = 12.dp, vertical = 5.dp)
                 ) {
                     Text(
-                        text = negocio.categoria,
-                        fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                        fontSize = 11.sp, color = Blue800
+                        negocio.categoria,
+                        fontFamily = Nunito,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        color = Blue800
                     )
                 }
             }

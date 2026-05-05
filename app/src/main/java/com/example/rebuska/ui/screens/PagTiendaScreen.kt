@@ -34,6 +34,7 @@ import com.example.rebuska.viewmodel.TiendaViewModel
 import com.example.rebuska.viewmodel.ChatViewModel
 
 
+
 @Composable
 fun TiendaScreen(
     idNegocio: String = "",
