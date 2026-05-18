@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,10 @@ fun ChatItem(
     chat: Chat,
     onClick: () -> Unit
 ) {
+    val uidActual = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    val esCliente = uidActual == chat.idUsuario1
+    val inicial = chat.nombreContacto.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -40,11 +45,23 @@ fun ChatItem(
                 .background(Color(0xFFE0E0E0), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                tint = Color.Gray
-            )
+            if (esCliente && chat.fotoUrl.isNotEmpty()) {
+                coil.compose.AsyncImage(
+                    model = chat.fotoUrl,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Text(
+                    text = inicial,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(10.dp))

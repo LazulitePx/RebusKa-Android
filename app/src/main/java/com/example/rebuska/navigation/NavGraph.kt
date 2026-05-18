@@ -43,9 +43,11 @@ object Rutas {
     const val HOME                  = "home"
     const val TIENDA                = "tienda/{idNegocio}"
     const val MENSAJES              = "mensajes"
-    const val CHAT                  = "chat/{chatId}"
+    const val CHAT = "chat/{chatId}/{nombreContacto}/{logoUrl}/{esCliente}"
     const val PERFIL                = "perfil"
     const val NEGOCIO = "com/example/rebuska/ui/screens/negocio/{id}"
+
+
 
     fun verificacionEmailRuta(telefono: String)    = "verificacion_email/$telefono"
     fun verificacionTelefonoRuta(telefono: String) = "verificacion_telefono/$telefono"
@@ -219,13 +221,20 @@ fun AppNavigation(
             TiendaScreen(
                 idNegocio   = idNegocio,
                 onAtras     = { navController.popBackStack() },
-                onContratar = { chatId -> navController.navigate("chat/$chatId") },
+                onContratar = { chatId, nombre, logo ->
+                    navController.navigate(
+                        "chat/$chatId/${
+                            java.net.URLEncoder.encode(nombre, "UTF-8")
+                        }/${
+                            java.net.URLEncoder.encode(logo, "UTF-8")
+                        }"
+                    )
+                },
                 onHome      = { navController.navigate(Rutas.HOME) },
                 onChats     = { navController.navigate(Rutas.MENSAJES) },
                 onPerfil    = { navController.navigate(Rutas.PERFIL) }
             )
         }
-
         // ── MENSAJES ──────────────────────────────────────
         composable(Rutas.MENSAJES) {
             MensajesScreen(navController)
@@ -233,11 +242,29 @@ fun AppNavigation(
 
         // ── CHAT ──────────────────────────────────────────
         composable(
-            route     = Rutas.CHAT,
-            arguments = listOf(navArgument("chatId") { type = NavType.StringType })
+            route = Rutas.CHAT,
+            arguments = listOf(
+                navArgument("chatId") { type = NavType.StringType },
+                navArgument("nombreContacto") { type = NavType.StringType },
+                navArgument("logoUrl") { type = NavType.StringType },
+                navArgument("esCliente") { type = NavType.BoolType }
+            )
         ) { backStackEntry ->
-            val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
-            ChatScreen(chatId = chatId, onBack = { navController.popBackStack() })
+            val chatId         = backStackEntry.arguments?.getString("chatId") ?: ""
+            val nombreContacto = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("nombreContacto") ?: "", "UTF-8"
+            )
+            val logoUrl   = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("logoUrl") ?: "", "UTF-8"
+            )
+            val esCliente = backStackEntry.arguments?.getBoolean("esCliente") ?: true
+            ChatScreen(
+                chatId         = chatId,
+                nombreContacto = nombreContacto,
+                logoUrl        = logoUrl,
+                esCliente      = esCliente,
+                onBack         = { navController.popBackStack() }
+            )
         }
 
         // ── PERFIL ────────────────────────────────────────

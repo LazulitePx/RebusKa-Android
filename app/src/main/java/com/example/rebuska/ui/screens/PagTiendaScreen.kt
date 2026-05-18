@@ -39,7 +39,7 @@ import com.example.rebuska.viewmodel.ChatViewModel
 fun TiendaScreen(
     idNegocio: String = "",
     onAtras: () -> Unit = {},
-    onContratar: (chatId: String) -> Unit = {},
+    onContratar: (chatId: String, nombre: String, logo: String) -> Unit = { _, _, _ -> },
     onChats: () -> Unit = {},
     onPerfil: () -> Unit = {},
     onHome: () -> Unit = {},
@@ -75,7 +75,8 @@ fun TiendaScreen(
                                 chatViewModel.contactar(
                                     idTrabajador  = n.idTrabajador,
                                     nombreNegocio = n.nombre,
-                                    onChatListo   = { chatId -> onContratar(chatId) }
+                                    logoUrl       = n.logoUrl,
+                                    onChatListo   = { chatId -> onContratar(chatId, n.nombre, n.logoUrl) }
                                 )
                             }
                         },

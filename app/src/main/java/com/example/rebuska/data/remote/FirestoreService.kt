@@ -143,11 +143,12 @@ object FirestoreService {
 
     suspend fun obtenerOCrearChat(
         idTrabajador: String,
-        nombreNegocio: String
+        nombreNegocio: String,
+        logoUrl: String = ""
     ): Result<String> = runCatching {
         val idCliente = auth.currentUser?.uid ?: error("No hay sesión activa")
 
-        // Buscar si ya existe un chat entre estos dos
+        // Buscar si ya existe
         val existente = chatsCol
             .whereEqualTo("idUsuario1", idCliente)
             .whereEqualTo("idUsuario2", idTrabajador)
@@ -157,16 +158,24 @@ object FirestoreService {
             return@runCatching existente.documents.first().id
         }
 
-        // Crear nuevo chat
+        // Obtener nombre del cliente desde Firestore
+        val clienteDoc = db.collection("usuarios").document(idCliente).get().await()
+        val nombreCliente = "${clienteDoc.getString("nombre") ?: ""} ${clienteDoc.getString("apellido") ?: ""}".trim()
+            .ifEmpty { "Cliente" }
+
+        // Crear nuevo chat con dos nombres
         val ref = chatsCol.document()
         ref.set(mapOf(
-            "id"             to ref.id,
-            "idUsuario1"     to idCliente,
-            "idUsuario2"     to idTrabajador,
-            "nombreContacto" to nombreNegocio,
-            "ultimoMensaje"  to "",
-            "timestamp"      to System.currentTimeMillis(),
-            "noLeidos"       to 0
+            "id"                to ref.id,
+            "idUsuario1"        to idCliente,
+            "idUsuario2"        to idTrabajador,
+            "nombreParaUsuario1" to nombreNegocio,   // cliente ve la tienda
+            "nombreParaUsuario2" to nombreCliente,   // trabajador ve el cliente
+            "logoUrl"            to logoUrl,         // Logo de la tienda
+            "ultimoMensaje"     to "",
+            "timestamp"         to System.currentTimeMillis(),
+            "noLeidosUsuario1"  to 0,
+            "noLeidosUsuario2"  to 0
         )).await()
 
         ref.id
@@ -182,20 +191,36 @@ object FirestoreService {
             .distinctBy { it.id }
             .mapNotNull { doc ->
                 val idUsuario1 = doc.getString("idUsuario1") ?: ""
-                // Leer el campo de no leidos correcto segun el usuario actual
-                val noLeidos = if (uid == idUsuario1)
+                val esUsuario1 = uid == idUsuario1
+
+                val noLeidos = if (esUsuario1)
                     doc.getLong("noLeidosUsuario1")?.toInt() ?: 0
                 else
                     doc.getLong("noLeidosUsuario2")?.toInt() ?: 0
+
+                // Mostrar el nombre correcto según quién es
+                val nombreContacto = if (esUsuario1)
+                    doc.getString("nombreParaUsuario1") ?: ""
+                else
+                    doc.getString("nombreParaUsuario2") ?: ""
+
+                val logoUrl = try {
+                    val negocioDoc = negociosCol
+                        .whereEqualTo("idTrabajador", doc.getString("idUsuario2") ?: "")
+                        .limit(1)
+                        .get().await()
+                    negocioDoc.documents.firstOrNull()?.getString("logoUrl") ?: ""
+                } catch (e: Exception) { "" }
 
                 Chat(
                     id             = doc.id,
                     idUsuario1     = idUsuario1,
                     idUsuario2     = doc.getString("idUsuario2") ?: "",
-                    nombreContacto = doc.getString("nombreContacto") ?: "",
+                    nombreContacto = nombreContacto,
                     ultimoMensaje  = doc.getString("ultimoMensaje") ?: "",
                     timestamp      = doc.getLong("timestamp") ?: 0L,
-                    noLeidos       = noLeidos
+                    noLeidos       = noLeidos,
+                    fotoUrl        = logoUrl
                 )
             }
             .sortedByDescending { it.timestamp }

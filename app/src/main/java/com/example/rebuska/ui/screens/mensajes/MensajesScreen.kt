@@ -53,10 +53,18 @@ fun MensajesScreen(
                 }
             } else {
                 chats.forEach { chat ->
+                    val uidActual = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                    val esCliente = uidActual == chat.idUsuario1
                     ChatItem(
-                        chat = chat,
+                        chat    = chat,
                         onClick = {
-                            navController.navigate("chat/${chat.id}")
+                            navController.navigate(
+                                "chat/${chat.id}/${
+                                    java.net.URLEncoder.encode(chat.nombreContacto, "UTF-8")
+                                }/${
+                                    java.net.URLEncoder.encode(chat.fotoUrl, "UTF-8")
+                                }/$esCliente"
+                            )
                         }
                     )
                 }
