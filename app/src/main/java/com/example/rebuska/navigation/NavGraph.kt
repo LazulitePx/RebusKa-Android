@@ -227,7 +227,7 @@ fun AppNavigation(
                             java.net.URLEncoder.encode(nombre, "UTF-8")
                         }/${
                             java.net.URLEncoder.encode(logo, "UTF-8")
-                        }"
+                        }/true"  // ← siempre true porque quien contacta es siempre el cliente
                     )
                 },
                 onHome      = { navController.navigate(Rutas.HOME) },

@@ -31,6 +31,8 @@ import com.example.rebuska.ui.theme.*
 import com.example.rebuska.viewmodel.HomeUiState
 import com.example.rebuska.viewmodel.HomeViewModel
 import coil.compose.AsyncImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 
 data class Categoria(val emoji: String, val nombre: String)
 
@@ -52,13 +54,9 @@ fun HomeScreen(
     onLogin: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
-    var busqueda by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsState()
-
-    val negocios = when (val s = uiState) {
-        is HomeUiState.Exito -> s.negocios
-        else -> emptyList()
-    }
+    val busqueda by viewModel.busqueda.collectAsState()
+    val negocios by viewModel.negociosFiltrados.collectAsState()
 
     Scaffold(
         bottomBar = {
@@ -97,17 +95,32 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        // Campo de texto para realizar búsquedas de productos o servicios
                         OutlinedTextField(
                             value = busqueda,
-                            onValueChange = { busqueda = it },
+                            onValueChange = { viewModel.busqueda.value = it },
                             placeholder = {
                                 Text("Buscar producto o servicio...",
                                     fontFamily = Nunito, fontWeight = FontWeight.SemiBold,
                                     fontSize = 13.sp, color = Color(0xFFAAAAAA))
                             },
+                            // Icono para limpiar la búsqueda cuando hay texto escrito
                             leadingIcon = {
                                 Icon(painterResource(R.drawable.ic_search), null,
                                     tint = Color(0xFFAAAAAA), modifier = Modifier.size(18.dp))
+                            },
+                            trailingIcon = {
+                                // Solo se muestra si el usuario ha escrito algo
+                                if (busqueda.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.busqueda.value = "" }) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.Close,
+                                            contentDescription = "Limpiar búsqueda",
+                                            tint = Color(0xFFAAAAAA),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
                             },
                             singleLine = true,
                             modifier = Modifier.weight(1f).height(56.dp),
