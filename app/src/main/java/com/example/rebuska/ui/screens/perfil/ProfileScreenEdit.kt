@@ -57,6 +57,7 @@ import com.example.rebuska.navigation.Rutas
 import com.example.rebuska.ui.components.BottomNavBar
 import com.example.rebuska.ui.components.NavDestino
 
+
 // data class para vista (provisional)
 data class EmpresaDisplay(
     val nombre: String,
@@ -130,25 +131,25 @@ fun ProfileScreenEdit(navController: NavHostController, empresaId: Int) {
             Spacer(modifier = Modifier.height(16.dp))
             //dexripcion
             SeccionDescripcion(
-                    descripcion = "Carpintería local con más de 20 años de experiencia, comprometidos en ofrecer los mejores productos de madera. Expertos en muebles a medida, puertas, ventanas y restauración.",
-                    onEditClick = { /* Acción para editar descripción */ }
-                )
+                descripcion = "Carpintería local con más de 20 años de experiencia, comprometidos en ofrecer los mejores productos de madera. Expertos en muebles a medida, puertas, ventanas y restauración.",
+                onEditClick = { /* Acción para editar descripción */ }
+            )
 
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                //seccion de publicaciones
-                SeccionMisPublicaciones(
-                    publicaciones = publicacionesLista,
-                    onNuevaPublicacionClick = { /* Acción para añadir nueva publicación */ },
-                    onEditPublicacionClick = { publicacion -> /* Acción para editar publicación */ },
-                    onDeletePublicacionClick = { publicacion ->
-                        publicacionesLista.remove(publicacion)
-                        // aqui iria la logica para la base de datos
-                    }
-                )
-            }
+            //seccion de publicaciones
+            SeccionMisPublicaciones(
+                publicaciones = publicacionesLista,
+                onNuevaPublicacionClick = { /* Acción para añadir nueva publicación */ },
+                onEditPublicacionClick = { publicacion -> /* Acción para editar publicación */ },
+                onDeletePublicacionClick = { publicacion ->
+                    publicacionesLista.remove(publicacion)
+                    // aqui iria la logica para la base de datos
+                }
+            )
         }
     }
+}
 
 
 // componentes internnos
