@@ -83,10 +83,16 @@ class ChatViewModel : ViewModel() {
                 .onSuccess { _chats.value = it }
         }
     }
-    fun contactar(idTrabajador: String, nombreNegocio: String, logoUrl: String = "", onChatListo: (String) -> Unit) {
+    fun contactar(
+        idTrabajador: String,
+        idNegocio: String,
+        nombreNegocio: String,
+        logoUrl: String = "",
+        onChatListo: (String) -> Unit
+    ) {
         viewModelScope.launch {
             _cargando.value = true
-            FirestoreService.obtenerOCrearChat(idTrabajador, nombreNegocio, logoUrl)
+            FirestoreService.obtenerOCrearChat(idTrabajador, idNegocio, nombreNegocio, logoUrl)
                 .onSuccess { id -> onChatListo(id) }
             _cargando.value = false
         }

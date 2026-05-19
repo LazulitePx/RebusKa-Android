@@ -74,6 +74,7 @@ fun TiendaScreen(
                             if (n != null) {
                                 chatViewModel.contactar(
                                     idTrabajador  = n.idTrabajador,
+                                    idNegocio     = n.id,
                                     nombreNegocio = n.nombre,
                                     logoUrl       = n.logoUrl,
                                     onChatListo   = { chatId -> onContratar(chatId, n.nombre, n.logoUrl) }

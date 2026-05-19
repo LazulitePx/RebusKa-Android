@@ -11,12 +11,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun HeaderMensajes() {
+fun HeaderMensajes(
+    searchText: String,
+    onSearchTextChange: (String) -> Unit
+) {
 
     Column(
         modifier = Modifier
@@ -47,12 +51,14 @@ fun HeaderMensajes() {
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = searchText,
+            onValueChange = onSearchTextChange,
+            textStyle = TextStyle(color = Color.White, fontSize = 14.sp),
             placeholder = {
                 Text(
                     text = "Buscar conversación...",
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 14.sp
                 )
             },
             leadingIcon = {
@@ -62,10 +68,22 @@ fun HeaderMensajes() {
                     tint = Color.White
                 )
             },
+            trailingIcon = {
+                if (searchText.isNotEmpty()) {
+                    IconButton(onClick = { onSearchTextChange("") }) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Limpiar búsqueda",
+                            tint = Color.White
+                        )
+                    }
+                }
+            },
+            singleLine = true,
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(52.dp),
 
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.White,
@@ -73,6 +91,8 @@ fun HeaderMensajes() {
                 cursorColor = Color.White,
                 focusedContainerColor = Color(0xFF2F80ED),
                 unfocusedContainerColor = Color(0xFF2F80ED),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
             )
         )
     }
