@@ -1,14 +1,14 @@
 package com.example.rebuska.data.model
 
 sealed class Usuario {
-    abstract val id: String          // String para el ID de FireBase
+    abstract val id: String
     abstract val nombre: String
     abstract val apellido: String
     abstract val cedula: String
     abstract val email: String
     abstract val telefono: String
     abstract val fechaRegistro: Long
-    abstract val tipo: String        // Campo nuevo para Firestore
+    abstract val tipo: String
 
     data class Cliente(
         override val id: String = "",

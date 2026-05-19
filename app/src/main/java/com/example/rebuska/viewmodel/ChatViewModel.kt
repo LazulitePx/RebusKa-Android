@@ -78,6 +78,25 @@ class ChatViewModel : ViewModel() {
     }
 
     fun cargarChats() {
+        val uid = Firebase.auth.currentUser?.uid ?: return
+
+        // Escuchar en tiempo real como cliente
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            .collection("chats")
+            .whereEqualTo("idUsuario1", uid)
+            .addSnapshotListener { _, _ -> actualizarChats(uid) }
+
+        // Escuchar en tiempo real como trabajador
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            .collection("chats")
+            .whereEqualTo("idUsuario2", uid)
+            .addSnapshotListener { _, _ -> actualizarChats(uid) }
+
+        // Cargar inicial
+        actualizarChats(uid)
+    }
+
+    private fun actualizarChats(uid: String) {
         viewModelScope.launch {
             FirestoreService.getChatsDelUsuario()
                 .onSuccess { _chats.value = it }

@@ -71,4 +71,36 @@ class HomeViewModel : ViewModel() {
                 }
         }
     }
+
+    private val _totalNoLeidos = MutableStateFlow(0)
+    val totalNoLeidos: StateFlow<Int> = _totalNoLeidos
+
+    fun escucharNoLeidos() {
+        val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            .collection("chats")
+            .whereEqualTo("idUsuario1", uid)
+            .addSnapshotListener { snapshot, _ ->
+                calcularNoLeidos(uid, snapshot)
+            }
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            .collection("chats")
+            .whereEqualTo("idUsuario2", uid)
+            .addSnapshotListener { snapshot, _ ->
+                calcularNoLeidos(uid, snapshot)
+            }
+    }
+
+    private fun calcularNoLeidos(uid: String, snapshot: com.google.firebase.firestore.QuerySnapshot?) {
+        snapshot ?: return
+        var total = 0
+        snapshot.documents.forEach { doc ->
+            val idUsuario1 = doc.getString("idUsuario1") ?: ""
+            val campo = if (uid == idUsuario1) "noLeidosUsuario1" else "noLeidosUsuario2"
+            total += doc.getLong(campo)?.toInt() ?: 0
+        }
+        _totalNoLeidos.value = total
+    }
 }

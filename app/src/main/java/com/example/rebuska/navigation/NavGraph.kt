@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.rebuska.ui.screens.HomeScreen
+import com.example.rebuska.ui.screens.NotificacionesScreen
 import com.example.rebuska.ui.screens.SplashScreen
 import com.example.rebuska.ui.screens.TiendaScreen
 import com.example.rebuska.ui.screens.login.LoginScreen
@@ -46,6 +47,8 @@ object Rutas {
     const val CHAT = "chat/{chatId}/{nombreContacto}/{logoUrl}/{esCliente}"
     const val PERFIL                = "perfil"
     const val NEGOCIO = "com/example/rebuska/ui/screens/negocio/{id}"
+    const val NOTIFICACIONES = "notificaciones"
+
 
 
 
@@ -88,7 +91,8 @@ fun AppNavigation(
                     // si hay sesión el botón no hace nada
                 },
                 onChats  = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil = { navController.navigate(Rutas.PERFIL) }
+                onPerfil = { navController.navigate(Rutas.PERFIL) },
+                onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) }
             )
         }
 
@@ -284,6 +288,23 @@ fun AppNavigation(
             val viewModel: NegocioViewModel = viewModel()
             NegocioFormScreen(viewModel, onBack = { navController.popBackStack() })
         }
+
+        composable(Rutas.NOTIFICACIONES) {
+            NotificacionesScreen(
+                onBack = { navController.popBackStack() },
+                onVerChat = { chatId, nombre, logo, esCliente ->
+                    navController.navigate(
+                        "chat/$chatId/${
+                            java.net.URLEncoder.encode(nombre, "UTF-8")
+                        }/${
+                            java.net.URLEncoder.encode(logo, "UTF-8")
+                        }/$esCliente"
+                    )
+                }
+            )
+        }
     }
+
+
 
 }
