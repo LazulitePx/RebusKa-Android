@@ -85,4 +85,125 @@ class RegistroViewModel : ViewModel() {
         password.length < 6 -> { _error.value = "La contraseña debe tener mínimo 6 caracteres"; false }
         else                -> true
     }
+
+    fun validarNombreCampo(texto: String): String? {
+
+        val valor = texto.trim()
+
+        if (valor.isEmpty()) {
+            return "Campo obligatorio"
+        }
+
+        if (valor.length < 2) {
+            return "Debe tener mínimo 2 letras"
+        }
+
+        val regex = Regex("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")
+
+        if (!regex.matches(valor)) {
+            return "Solo se permiten letras"
+        }
+
+        if (valor.contains("  ")) {
+            return "No se permiten espacios dobles"
+        }
+
+        return null
+    }
+
+    fun validarEmailCampo(email: String): String? {
+
+        val valor = email.trim()
+
+        if (valor.isEmpty()) {
+            return "Correo obligatorio"
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(valor).matches()) {
+            return "Correo inválido"
+        }
+
+        return null
+    }
+
+    fun validarCedulaCampo(cedula: String): String? {
+
+        val valor = cedula.trim()
+
+        if (valor.isEmpty()) {
+            return "La cédula es obligatoria"
+        }
+
+        if (!valor.all { it.isDigit() }) {
+            return "Solo se permiten números"
+        }
+
+        return null
+    }
+
+    fun validarCelularCampo(celular: String): String? {
+
+        val valor = celular.trim()
+
+        if (valor.isEmpty()) {
+            return "El celular es obligatorio"
+        }
+
+        if (!valor.all { it.isDigit() }) {
+            return "Solo se permiten números"
+        }
+
+        if (!valor.startsWith("3")) {
+            return "Debe iniciar con 3"
+        }
+
+        if (valor.length != 10) {
+            return "Debe tener exactamente 10 dígitos"
+        }
+
+        return null
+    }
+
+    fun validarPasswordCampo(password: String): String? {
+
+        if (password.isBlank()) {
+            return "La contraseña es obligatoria"
+        }
+
+        if (password.length < 8) {
+            return "Mínimo 8 caracteres"
+        }
+
+        if (!password.any { it.isLetter() }) {
+            return "Debe contener letras"
+        }
+
+        if (!password.any { it.isDigit() }) {
+            return "Debe contener números"
+        }
+
+        val simbolos = Regex("[^A-Za-z0-9]")
+
+        if (!simbolos.containsMatchIn(password)) {
+            return "Debe contener un símbolo"
+        }
+
+        return null
+    }
+
+    fun validarConfirmarPassword(
+        password: String,
+        confirmar: String
+    ): String? {
+
+        if (confirmar.isBlank()) {
+            return "Confirma tu contraseña"
+        }
+
+        if (password != confirmar) {
+            return "Las contraseñas no coinciden"
+        }
+
+        return null
+    }
 }

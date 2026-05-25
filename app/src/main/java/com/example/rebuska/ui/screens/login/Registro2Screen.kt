@@ -60,6 +60,7 @@ import com.example.rebuska.ui.theme.DividerColor
 import com.example.rebuska.ui.theme.Nunito
 import com.example.rebuska.ui.theme.TextMuted
 import com.example.rebuska.ui.theme.TextPrimary
+import com.example.rebuska.ui.viewmodel.RegistroViewModel
 
 @Composable
 fun Registro2Screen(
@@ -75,6 +76,12 @@ fun Registro2Screen(
     var confirmarPassword by remember { mutableStateOf("") }
     var passVisible       by remember { mutableStateOf(false) }
     var confirmVisible    by remember { mutableStateOf(false) }
+    val viewModel = remember { RegistroViewModel() }
+
+    var errorCedula by remember { mutableStateOf<String?>(null) }
+    var errorCelular by remember { mutableStateOf<String?>(null) }
+    var errorPassword by remember { mutableStateOf<String?>(null) }
+    var errorConfirmPassword by remember { mutableStateOf<String?>(null) }
 
     // Fuerza de contraseña
     val passwordStrength = when {
@@ -288,7 +295,13 @@ fun Registro2Screen(
                 // Cédula
                 OutlinedTextField(
                     value = cedula,
-                    onValueChange = { cedula = it },
+                    onValueChange = {
+
+                        if (it.all { char -> char.isDigit() }) {
+                            cedula = it
+                            errorCedula = viewModel.validarCedulaCampo(it)
+                        }
+                    },
                     placeholder = {
                         Text(
                             "Número de cédula", fontFamily = Nunito,
@@ -313,7 +326,14 @@ fun Registro2Screen(
                         focusedContainerColor = Color.Companion.White,
                         unfocusedContainerColor = Color.Companion.White,
                         cursorColor = Blue800
-                    )
+                    ),
+                    isError = errorCedula != null,
+
+                    supportingText = {
+                        errorCedula?.let {
+                            Text(it)
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.Companion.height(14.dp))
@@ -321,7 +341,13 @@ fun Registro2Screen(
                 // Celular con prefijo
                 OutlinedTextField(
                     value = celular,
-                    onValueChange = { celular = it },
+                    onValueChange = {
+
+                        if (it.all { char -> char.isDigit() } && it.length <= 10) {
+                            celular = it
+                            errorCelular = viewModel.validarCelularCampo(it)
+                        }
+                    },
                     placeholder = {
                         Text(
                             "Número de celular", fontFamily = Nunito,
@@ -356,7 +382,14 @@ fun Registro2Screen(
                         focusedContainerColor = Color.Companion.White,
                         unfocusedContainerColor = Color.Companion.White,
                         cursorColor = Blue800
-                    )
+                    ),
+                    isError = errorCelular != null,
+
+                    supportingText = {
+                        errorCelular?.let {
+                            Text(it)
+                        }
+                    }
                 )
 
                 Text(
@@ -373,7 +406,13 @@ fun Registro2Screen(
                 // Contraseña
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = {
+                        password = it
+                        errorPassword = viewModel.validarPasswordCampo(it)
+
+                        errorConfirmPassword =
+                            viewModel.validarConfirmarPassword(password, confirmarPassword)
+                    },
                     placeholder = {
                         Text(
                             "Contraseña", fontFamily = Nunito,
@@ -405,7 +444,14 @@ fun Registro2Screen(
                         focusedContainerColor = Color.Companion.White,
                         unfocusedContainerColor = Color.Companion.White,
                         cursorColor = Blue800
-                    )
+                    ),
+                    isError = errorPassword != null,
+
+                    supportingText = {
+                        errorPassword?.let {
+                            Text(it)
+                        }
+                    },
                 )
 
                 Spacer(modifier = Modifier.Companion.height(14.dp))
@@ -413,7 +459,12 @@ fun Registro2Screen(
                 // Confirmar contraseña
                 OutlinedTextField(
                     value = confirmarPassword,
-                    onValueChange = { confirmarPassword = it },
+                    onValueChange = {
+                        confirmarPassword = it
+
+                        errorConfirmPassword =
+                            viewModel.validarConfirmarPassword(password, it)
+                    },
                     placeholder = {
                         Text(
                             "Confirmar contraseña", fontFamily = Nunito,
@@ -445,10 +496,17 @@ fun Registro2Screen(
                         focusedContainerColor = Color.Companion.White,
                         unfocusedContainerColor = Color.Companion.White,
                         cursorColor = Blue800
-                    )
+                    ),
+                    isError = errorConfirmPassword != null,
+
+                    supportingText = {
+                        errorConfirmPassword?.let {
+                            Text(it)
+                        }
+                    },
                 )
 
-                // Barra de fortaleza
+                // Barra de fortaleza de contraseña
                 if (password.isNotEmpty()) {
                     Spacer(modifier = Modifier.Companion.height(8.dp))
                     Row(
@@ -486,7 +544,30 @@ fun Registro2Screen(
                 // Botón Crear cuenta (verde)
                 Button(
                     onClick = {
-                        onCrearCuenta(cedula, celular, password)
+
+                        errorCedula = viewModel.validarCedulaCampo(cedula)
+                        errorCelular = viewModel.validarCelularCampo(celular)
+                        errorPassword = viewModel.validarPasswordCampo(password)
+
+                        errorConfirmPassword =
+                            viewModel.validarConfirmarPassword(
+                                password,
+                                confirmarPassword
+                            )
+
+                        if (
+                            errorCedula == null &&
+                            errorCelular == null &&
+                            errorPassword == null &&
+                            errorConfirmPassword == null
+                        ) {
+
+                            onCrearCuenta(
+                                cedula,
+                                celular,
+                                password
+                            )
+                        }
                     },
                     enabled = !cargando,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
