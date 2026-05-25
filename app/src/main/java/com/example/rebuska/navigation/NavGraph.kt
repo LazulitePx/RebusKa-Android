@@ -32,6 +32,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.example.rebuska.ui.viewmodel.NegocioViewModel
 import com.example.rebuska.ui.screens.negocio.NegocioFormScreen
+import com.example.rebuska.ui.screens.publicacion.PublicacionFormScreen
 
 object Rutas {
     const val SPLASH                = "splash"
@@ -46,7 +47,8 @@ object Rutas {
     const val MENSAJES              = "mensajes"
     const val CHAT = "chat/{chatId}/{nombreContacto}/{logoUrl}/{esCliente}"
     const val PERFIL                = "perfil"
-    const val NEGOCIO = "com/example/rebuska/ui/screens/negocio/{id}"
+    const val NEGOCIO = "negocio/{id}"
+    const val CREAR_PUBLICACION = "crear_publicacion/{idNegocio}"
     const val NOTIFICACIONES = "notificaciones"
 
 
@@ -56,6 +58,7 @@ object Rutas {
     fun verificacionTelefonoRuta(telefono: String) = "verificacion_telefono/$telefono"
     fun tiendaRuta(id: String)  = "tienda/$id"
     fun negocioRuta(id: String) = "negocio/$id"
+    fun crearPublicacionRuta(idNegocio: String) = "crear_publicacion/$idNegocio"
 }
 
 @Composable
@@ -239,6 +242,7 @@ fun AppNavigation(
                 onPerfil    = { navController.navigate(Rutas.PERFIL) }
             )
         }
+
         // ── MENSAJES ──────────────────────────────────────
         composable(Rutas.MENSAJES) {
             MensajesScreen(navController)
@@ -278,11 +282,11 @@ fun AppNavigation(
 
         // ── NEGOCIO ───────────────────────────────────────
         composable(
-            route     = Rutas.NEGOCIO,
+            route = Rutas.NEGOCIO,
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
             val negocioId = backStackEntry.arguments?.getString("id") ?: ""
-            ProfileScreenEdit(navController, negocioId.toIntOrNull() ?: 0)
+            ProfileScreenEdit(navController, negocioId)
         }
         composable("negocioForm") {
             val viewModel: NegocioViewModel = viewModel()
@@ -303,6 +307,18 @@ fun AppNavigation(
                 }
             )
         }
+        // ── PUBLICACION ───────────────────────────────────────
+        composable(
+            route = Rutas.CREAR_PUBLICACION,
+            arguments = listOf(navArgument("idNegocio") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: ""
+            PublicacionFormScreen(
+                idNegocio = idNegocio,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
     }
 
 
