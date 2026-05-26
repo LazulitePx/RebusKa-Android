@@ -7,6 +7,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.example.rebuska.data.repository.OtpRepository
+import com.google.firebase.auth.FirebaseAuth
 
 sealed class EmailVerificacionState {
     object Idle       : EmailVerificacionState()
@@ -24,40 +26,110 @@ class VerificacionEmailViewModel : ViewModel() {
     private val _segundos = MutableStateFlow(300) // 5 min countdown
     val segundos: StateFlow<Int> = _segundos
 
-    // Llama esto después de crear la cuenta en Registro2
-    fun enviarEmail(email: String, password: String) {
+    // Enviar codigo OTP al email
+    fun enviarEmail(email: String) {
+
         viewModelScope.launch {
+
             _estado.value = EmailVerificacionState.Cargando
-            val result = AuthRepository.enviarVerificacionEmail(email, password)
+
+            val result = OtpRepository.enviarOtp(email)
+
             if (result.isSuccess) {
+
                 _estado.value = EmailVerificacionState.Pendiente
+
                 iniciarContador()
+
             } else {
+
                 _estado.value = EmailVerificacionState.Error(
-                    result.exceptionOrNull()?.message ?: "Error al enviar el correo"
+                    result.exceptionOrNull()?.message
+                        ?: "Error enviando OTP"
                 )
             }
         }
     }
 
-    // El usuario dice "ya verifiqué" — revisamos Firebase
-    fun comprobarVerificacion() {
+    fun verificarCodigo(
+        email: String,
+        codigo: String
+    ) {
+
         viewModelScope.launch {
-            _estado.value = EmailVerificacionState.Cargando
-            val result = AuthRepository.verificarEmail()
-            _estado.value = when {
-                result.isSuccess && result.getOrDefault(false) -> EmailVerificacionState.Verificado
-                result.isSuccess -> EmailVerificacionState.Error("Aún no has verificado tu correo. Revisa tu bandeja.")
-                else -> EmailVerificacionState.Error(result.exceptionOrNull()?.message ?: "Error")
+
+            _estado.value =
+                EmailVerificacionState.Cargando
+
+            val result =
+                OtpRepository.verificarOtp(
+                    email,
+                    codigo
+                )
+
+            if (result.isSuccess) {
+
+                // Recargar usuario Firebase
+                FirebaseAuth
+                    .getInstance()
+                    .currentUser
+                    ?.reload()
+
+                // Revisar si quedó verificado
+                val verificado =
+                    FirebaseAuth
+                        .getInstance()
+                        .currentUser
+                        ?.isEmailVerified
+                        ?: false
+
+                if (verificado) {
+
+                    _estado.value =
+                        EmailVerificacionState.Verificado
+
+                } else {
+
+                    _estado.value =
+                        EmailVerificacionState.Error(
+                            "No se pudo verificar el correo"
+                        )
+                }
+
+            } else {
+
+                _estado.value =
+                    EmailVerificacionState.Error(
+                        result.exceptionOrNull()?.message
+                            ?: "Código incorrecto"
+                    )
             }
         }
     }
 
-    fun reenviarEmail() {
+    fun reenviarCodigo(email: String) {
+
         viewModelScope.launch {
-            AuthRepository.reenviarVerificacionEmail()
-            _segundos.value = 300
-            iniciarContador()
+
+            _estado.value = EmailVerificacionState.Cargando
+
+            val result = OtpRepository.enviarOtp(email)
+
+            if (result.isSuccess) {
+
+                _segundos.value = 300
+                iniciarContador()
+
+                _estado.value = EmailVerificacionState.Pendiente
+
+            } else {
+
+                _estado.value = EmailVerificacionState.Error(
+
+                    result.exceptionOrNull()?.message
+                        ?: "No se pudo reenviar el código"
+                )
+            }
         }
     }
 

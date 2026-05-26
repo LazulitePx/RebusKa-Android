@@ -27,7 +27,7 @@ import androidx.compose.material.icons.filled.Add
 fun ProfileScreen(navController: NavHostController) {
     val auth = Firebase.auth
     val usuario = auth.currentUser
-
+    val haySesion = usuario != null
     var nombre by remember { mutableStateOf("Usuario") }
     var correo by remember { mutableStateOf("") }
     val telefono = usuario?.phoneNumber ?: ""
@@ -61,9 +61,14 @@ fun ProfileScreen(navController: NavHostController) {
             confirmButton = {
                 TextButton(onClick = {
                     auth.signOut()
+
                     mostrarDialogo = false
+
                     navController.navigate(Rutas.HOME) {
-                        popUpTo(Rutas.HOME) { inclusive = true }
+
+                        popUpTo(0)
+
+                        launchSingleTop = true
                     }
                 }) {
                     Text("Sí, salir", color = Color.Red, fontWeight = FontWeight.Bold)
@@ -76,7 +81,60 @@ fun ProfileScreen(navController: NavHostController) {
             }
         )
     }
+    if (!haySesion) {
 
+        Scaffold(
+            bottomBar = {
+                BottomNavBar(
+                    seleccionado = NavDestino.PERFIL,
+                    onHome = { navController.navigate(Rutas.HOME) },
+                    onChats = { navController.navigate(Rutas.MENSAJES) },
+                    onPerfil = { },
+                    onMenu = { },
+                    onLogo = { navController.navigate(Rutas.HOME) }
+                )
+            }
+        ) { innerPadding ->
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .background(Color(0xFFE8E9EA)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+
+                Text(
+                    text = "No has iniciado sesión",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Button(
+                    onClick = {
+                        navController.navigate(Rutas.LOGIN)
+                    }
+                ) {
+                    Text("Iniciar sesión")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        navController.navigate(Rutas.REGISTRO_ROL)
+                    }
+                ) {
+                    Text("Registrarse")
+                }
+            }
+        }
+
+        return
+    }
     Scaffold(
         bottomBar = {
             BottomNavBar(

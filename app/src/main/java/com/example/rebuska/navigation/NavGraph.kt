@@ -38,7 +38,7 @@ object Rutas {
     const val REGISTRO_ROL          = "registro_rol"
     const val REGISTRO_1            = "registro_1"
     const val REGISTRO_2            = "registro_2"
-    const val VERIFICACION_EMAIL    = "verificacion_email/{telefono}"
+    const val VERIFICACION_EMAIL = "verificacion_email"
     const val VERIFICACION_TELEFONO = "verificacion_telefono/{telefono}"
     const val HOME                  = "home"
     const val TIENDA                = "tienda/{idNegocio}"
@@ -47,7 +47,7 @@ object Rutas {
     const val PERFIL                = "perfil"
     const val NEGOCIO = "com/example/rebuska/ui/screens/negocio/{id}"
 
-    fun verificacionEmailRuta(telefono: String)    = "verificacion_email/$telefono"
+    fun verificacionEmailRuta() = "verificacion_email"
     fun verificacionTelefonoRuta(telefono: String) = "verificacion_telefono/$telefono"
     fun tiendaRuta(id: String)  = "tienda/$id"
     fun negocioRuta(id: String) = "negocio/$id"
@@ -161,7 +161,7 @@ fun AppNavigation(
 
             LaunchedEffect(exitoso) {
                 if (exitoso) {
-                    navController.navigate(Rutas.verificacionEmailRuta(viewModel.telefono)) {
+                    navController.navigate(Rutas.verificacionEmailRuta()) {
                         popUpTo(Rutas.REGISTRO_ROL) { inclusive = true }
                     }
                 }
@@ -182,14 +182,31 @@ fun AppNavigation(
         }
 
         // ── VERIFICACIÓN EMAIL ────────────────────────────
-        composable(
-            route     = Rutas.VERIFICACION_EMAIL,
-            arguments = listOf(navArgument("telefono") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val telefono = backStackEntry.arguments?.getString("telefono") ?: ""
+        composable(Rutas.VERIFICACION_EMAIL) { backStackEntry ->
+
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Rutas.REGISTRO_ROL)
+            }
+
+            val registroViewModel: RegistroViewModel =
+                viewModel(parentEntry)
+
+            val email = registroViewModel.email
+            val telefono = registroViewModel.telefono
+
             VerificacionEmailScreen(
-                onVerificar = {
-                    navController.navigate(Rutas.verificacionTelefonoRuta(telefono))
+
+                email = email,
+
+                onVerificadoCorrectamente = {
+
+                    navController.navigate(
+                        Rutas.verificacionTelefonoRuta(telefono)
+                    )
+                },
+
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }

@@ -64,34 +64,82 @@ import com.example.rebuska.ui.theme.Nunito
 import com.example.rebuska.ui.theme.TextMuted
 import com.example.rebuska.ui.theme.TextPrimary
 import kotlinx.coroutines.delay
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.rebuska.viewmodel.EmailVerificacionState
+import com.example.rebuska.viewmodel.VerificacionEmailViewModel
 
 @Composable
 fun VerificacionEmailScreen(
-    email: String = "correo@ejemplo.com",
-    onVerificar: () -> Unit = {},
-    onReenviar: () -> Unit = {}
+    email: String,
+    viewModel: VerificacionEmailViewModel = viewModel(),
+    onVerificadoCorrectamente: () -> Unit = {},
+    onBack: () -> Unit = {}
 ) {
+
     var codigo by remember { mutableStateOf("") }
+    var codigoError by remember { mutableStateOf("") }
+
     val digitCount = 6
 
-    // Timer 5 minutos
-    var segundos by remember { mutableStateOf(287) }
-    LaunchedEffect(Unit) {
-        while (segundos > 0) {
-            delay(1000)
-            segundos--
+    // Estado del ViewModel
+    val estado by viewModel.estado.collectAsStateWithLifecycle()
+    LaunchedEffect(estado) {
+
+        if (estado is EmailVerificacionState.Verificado) {
+
+            onVerificadoCorrectamente()
         }
     }
-    val minutos     = segundos / 60
-    val segsDisplay = segundos % 60
-    val timerLabel  = "$minutos:${segsDisplay.toString().padStart(2, '0')}"
-    val timerPct    = segundos / 300f
 
-    val contentAlpha  = remember { Animatable(0f) }
+    // Loading
+    val cargando = estado is EmailVerificacionState.Cargando
+
+    // Mensaje de error
+    val errorMsg = when (estado) {
+
+        is EmailVerificacionState.Error -> {
+            (estado as EmailVerificacionState.Error).mensaje
+        }
+
+        else -> null
+    }
+
+    // Si el código fue verificado
+    LaunchedEffect(estado) {
+
+        if (estado is EmailVerificacionState.Verificado) {
+
+            onVerificadoCorrectamente()
+        }
+    }
+
+    // Timer desde ViewModel
+    val segundos by viewModel.segundos.collectAsState()
+
+    val minutos = segundos / 60
+    val segsDisplay = segundos % 60
+
+    val timerLabel =
+        "$minutos:${segsDisplay.toString().padStart(2, '0')}"
+
+    val timerPct = segundos / 300f
+
+    // Animaciones
+    val contentAlpha = remember { Animatable(0f) }
     val contentOffset = remember { Animatable(30f) }
+
     LaunchedEffect(Unit) {
-        contentAlpha.animateTo(1f, animationSpec = tween(600))
-        contentOffset.animateTo(0f, animationSpec = tween(600))
+
+        contentAlpha.animateTo(
+            1f,
+            animationSpec = tween(600)
+        )
+
+        contentOffset.animateTo(
+            0f,
+            animationSpec = tween(600)
+        )
     }
 
     Box(modifier = Modifier.Companion.fillMaxSize().background(Color.Companion.White)) {
@@ -209,8 +257,42 @@ fun VerificacionEmailScreen(
                 OtpField(
                     value = codigo,
                     digitCount = digitCount,
-                    onValueChange = { if (it.length <= digitCount) codigo = it }
+                    onValueChange = {
+
+                        if (it.all { char -> char.isDigit() } && it.length <= digitCount) {
+
+                            codigo = it
+                            codigoError = ""
+
+                        }
+                    }
                 )
+
+                if (codigoError.isNotEmpty()) {
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = codigoError,
+                        color = Color.Red,
+                        fontFamily = Nunito,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+
+                if (errorMsg != null) {
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = errorMsg,
+                        color = Color.Red,
+                        fontFamily = Nunito,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
 
                 Spacer(modifier = Modifier.Companion.height(20.dp))
 
@@ -250,7 +332,10 @@ fun VerificacionEmailScreen(
                         color = TextMuted
                     )
                     TextButton(
-                        onClick = onReenviar,
+                        onClick = {
+
+                            viewModel.reenviarCodigo(email)
+                        },
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
@@ -296,19 +381,60 @@ fun VerificacionEmailScreen(
                 Spacer(modifier = Modifier.Companion.height(28.dp))
 
                 Button(
-                    onClick = onVerificar,
-                    modifier = Modifier.Companion.fillMaxWidth().height(52.dp),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Blue800),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                ) {
-                    Text(
-                        "Verificar correo",
-                        fontFamily = Nunito,
-                        fontWeight = FontWeight.Companion.ExtraBold,
-                        fontSize = 15.sp,
-                        color = Color.Companion.White
+                    onClick = {
+
+                        when {
+
+                            codigo.isBlank() -> {
+                                codigoError = "Ingresa el código"
+                            }
+
+                            codigo.length != 6 -> {
+                                codigoError = "El código debe tener 6 dígitos"
+                            }
+
+                            else -> {
+
+                                codigoError = ""
+
+                                viewModel.verificarCodigo(
+                                    email = email,
+                                    codigo = codigo
+                                )
+                            }
+                        }
+                    },
+                    enabled = !cargando,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Blue800
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 4.dp
                     )
+                ) {
+
+                    if (cargando) {
+
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+
+                    } else {
+
+                        Text(
+                            "Verificar correo",
+                            fontFamily = Nunito,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 15.sp,
+                            color = Color.White
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.Companion.height(24.dp))
@@ -404,5 +530,8 @@ fun TimerCircle(label: String, progress: Float) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun VerificacionEmailPreview() {
-    VerificacionEmailScreen()
+
+    VerificacionEmailScreen(
+        email = "test@correo.com"
+    )
 }

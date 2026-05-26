@@ -73,6 +73,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
 
     implementation(libs.androidx.compose.livedata)
-
+    // Firestore Functions
+    implementation("com.google.firebase:firebase-functions-ktx")
 
 }
