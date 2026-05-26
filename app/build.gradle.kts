@@ -66,7 +66,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     // Cloud Firestore
-    implementation("com.google.firebase:firebase-firestore:25.1.1")
+    implementation("com.google.firebase:firebase-firestore:26.3.0")
     // Firebase Storage
     implementation("com.google.firebase:firebase-storage:21.0.1")
     // Coil — para mostrar imágenes desde URL en Compose
