@@ -57,6 +57,7 @@ import com.example.rebuska.ui.theme.DividerColor
 import com.example.rebuska.ui.theme.Nunito
 import com.example.rebuska.ui.theme.TextMuted
 import com.example.rebuska.ui.theme.TextPrimary
+import com.example.rebuska.ui.viewmodel.RegistroViewModel
 
 @Composable
 fun Registro1Screen(
@@ -67,6 +68,11 @@ fun Registro1Screen(
     var nombre   by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
     var email    by remember { mutableStateOf("") }
+    var errorNombre by remember { mutableStateOf<String?>(null) }
+    var errorApellido by remember { mutableStateOf<String?>(null) }
+    var errorEmail by remember { mutableStateOf<String?>(null) }
+
+    val viewModel = remember { RegistroViewModel() }
 
     val contentAlpha  = remember { Animatable(0f) }
     val contentOffset = remember { Animatable(30f) }
@@ -262,41 +268,65 @@ fun Registro1Screen(
                 ) {
                     OutlinedTextField(
                         value = nombre,
-                        onValueChange = { nombre = it },
+                        onValueChange = {
+                            nombre = it
+                            errorNombre = viewModel.validarNombreCampo(it)
+                        },
+                        isError = errorNombre != null,
+                        supportingText = {
+                            errorNombre?.let {
+                                Text(text = it)
+                            }
+                        },
                         placeholder = {
                             Text(
-                                "Nombre", fontFamily = Nunito,
-                                fontWeight = FontWeight.Companion.SemiBold, color = TextMuted
+                                "Nombre",
+                                fontFamily = Nunito,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextMuted
                             )
                         },
                         singleLine = true,
-                        modifier = Modifier.Companion.weight(1f),
+                        modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Blue800,
                             unfocusedBorderColor = BlueBorder,
-                            focusedContainerColor = Color.Companion.White,
-                            unfocusedContainerColor = Color.Companion.White,
+                            errorBorderColor = Color.Red,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
                             cursorColor = Blue800
                         )
                     )
                     OutlinedTextField(
                         value = apellido,
-                        onValueChange = { apellido = it },
+                        onValueChange = {
+                            apellido = it
+                            errorApellido = viewModel.validarNombreCampo(it)
+                        },
+                        isError = errorApellido != null,
+                        supportingText = {
+                            errorApellido?.let {
+                                Text(text = it)
+                            }
+                        },
                         placeholder = {
                             Text(
-                                "Apellido", fontFamily = Nunito,
-                                fontWeight = FontWeight.Companion.SemiBold, color = TextMuted
+                                "Apellido",
+                                fontFamily = Nunito,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextMuted
                             )
                         },
                         singleLine = true,
-                        modifier = Modifier.Companion.weight(1f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Blue800,
                             unfocusedBorderColor = BlueBorder,
-                            focusedContainerColor = Color.Companion.White,
-                            unfocusedContainerColor = Color.Companion.White,
+                            errorBorderColor = Color.Red,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
                             cursorColor = Blue800
                         )
                     )
@@ -307,11 +337,22 @@ fun Registro1Screen(
                 // Email
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {
+                        email = it
+                        errorEmail = viewModel.validarEmailCampo(it)
+                    },
+                    isError = errorEmail != null,
+                    supportingText = {
+                        errorEmail?.let {
+                            Text(text = it)
+                        }
+                    },
                     placeholder = {
                         Text(
-                            "Correo electrónico", fontFamily = Nunito,
-                            fontWeight = FontWeight.Companion.SemiBold, color = TextMuted
+                            "Correo electrónico",
+                            fontFamily = Nunito,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextMuted
                         )
                     },
                     trailingIcon = {
@@ -319,18 +360,21 @@ fun Registro1Screen(
                             painter = painterResource(R.drawable.ic_email),
                             contentDescription = null,
                             tint = TextMuted,
-                            modifier = Modifier.Companion.size(20.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Email),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email
+                    ),
                     singleLine = true,
-                    modifier = Modifier.Companion.fillMaxWidth(),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Blue800,
                         unfocusedBorderColor = BlueBorder,
-                        focusedContainerColor = Color.Companion.White,
-                        unfocusedContainerColor = Color.Companion.White,
+                        errorBorderColor = Color.Red,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
                         cursorColor = Blue800
                     )
                 )
@@ -349,7 +393,20 @@ fun Registro1Screen(
 
                 // Botón Continuar
                 Button(
-                    onClick = { onContinuar(nombre, apellido, email) },
+                    onClick = {
+
+                        errorNombre = viewModel.validarNombreCampo(nombre)
+                        errorApellido = viewModel.validarNombreCampo(apellido)
+                        errorEmail = viewModel.validarEmailCampo(email)
+
+                        if (
+                            errorNombre == null &&
+                            errorApellido == null &&
+                            errorEmail == null
+                        ) {
+                            onContinuar(nombre, apellido, email)
+                        }
+                    },
                     modifier = Modifier.Companion.fillMaxWidth().height(52.dp),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Blue800),

@@ -47,22 +47,33 @@ fun ProfileScreen(navController: NavHostController) {
 
     // Cargar datos del usuario y su tipo (trabajador o cliente)
     LaunchedEffect(usuario) {
-        usuario?.let {
-            correo = it.email ?: it.phoneNumber ?: "Sin información"
-            val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("usuarios")
-                .document(it.uid)
-                .get()
-                .await()
+        usuario?.let { user ->
+            correo = user.email ?: user.phoneNumber ?: "Sin información"
+            try {
+                val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("usuarios")
+                    .document(user.uid)
+                    .get()
+                    .await()
 
-            nombre = doc.getString("nombre") ?: it.displayName ?: "Usuario"
-            tipoUsuario = doc.getString("tipo")?.trim()?.lowercase() // ← CAMBIO CLAVE
+                android.util.Log.d("PERFIL", "UID buscado: ${user.uid}")
+                android.util.Log.d("PERFIL", "doc.exists(): ${doc.exists()}")
+                android.util.Log.d("PERFIL", "doc.data: ${doc.data}")
 
-            // Si es trabajador, cargar sus negocios
-            if (tipoUsuario == "trabajador") {
-                val result = NegocioRepository.getNegociosByTrabajador(it.uid)
-                result.onSuccess { negocios = it }
-                    .onFailure { println("❌ Error al cargar negocios: ${it.message}") }
+                nombre      = doc.getString("nombre") ?: user.displayName ?: "Usuario"
+                tipoUsuario = doc.getString("tipo")?.trim()?.lowercase()
+
+                android.util.Log.d("PERFIL", "tipo cargado: $tipoUsuario")
+
+                if (tipoUsuario == "trabajador") {
+                    val result = NegocioRepository.getNegociosByTrabajador(user.uid)
+                    result.onSuccess { lista -> negocios = lista }
+                        .onFailure { e -> android.util.Log.e("PERFIL", "Error negocios: ${e.message}") }
+                }
+
+            } catch (e: Exception) {
+                android.util.Log.e("PERFIL", "Error cargando perfil: ${e.message}", e)
+                tipoUsuario = "cliente" // fallback para no quedar en spinner infinito
             }
         }
     }
@@ -148,9 +159,8 @@ fun ProfileScreen(navController: NavHostController) {
                 }
 
                 tipoUsuario == null -> {
-                    // 🔹 Indicador mientras se carga el tipo
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color(0xFF1e5dba))
+
                     }
                 }
 

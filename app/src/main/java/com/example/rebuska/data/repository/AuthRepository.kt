@@ -36,9 +36,6 @@ object AuthRepository {
                 .build()
             result.user?.updateProfile(profileUpdates)?.await()
 
-            // Enviar verificación de correo
-            result.user?.sendEmailVerification()?.await()
-
             // Guardar datos en Firestore
             db.collection("usuarios").document(uid).set(datosUsuario).await()
 
@@ -74,7 +71,6 @@ object AuthRepository {
     ): Result<FirebaseUser> {
         return try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
-            result.user?.sendEmailVerification()?.await()
             Result.success(result.user!!)
         } catch (e: Exception) {
             Result.failure(e)
@@ -93,7 +89,6 @@ object AuthRepository {
 
     suspend fun reenviarVerificacionEmail(): Result<Unit> {
         return try {
-            auth.currentUser?.sendEmailVerification()?.await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -108,6 +103,7 @@ object AuthRepository {
         telefono: String,
         activity: Activity,
         onCodeSent: (verificationId: String) -> Unit,
+        onVerificado: () -> Unit,
         onError: (Exception) -> Unit
     ) {
         val options = PhoneAuthOptions.newBuilder(auth)
@@ -118,6 +114,8 @@ object AuthRepository {
 
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
                     auth.signInWithCredential(credential)
+                        .addOnSuccessListener { onVerificado() }
+                        .addOnFailureListener { onError(it) }
                 }
 
                 override fun onVerificationFailed(e: com.google.firebase.FirebaseException) {
@@ -142,8 +140,17 @@ object AuthRepository {
     ): Result<FirebaseUser> {
         return try {
             val credential = PhoneAuthProvider.getCredential(verificationId, codigo)
-            val result     = auth.signInWithCredential(credential).await()
-            Result.success(result.user!!)
+
+            val currentUser = auth.currentUser
+
+            if (currentUser != null) {
+                val result = currentUser.linkWithCredential(credential).await()
+                Result.success(result.user!!)
+            } else {
+                // Fallback: sign in normal
+                val result = auth.signInWithCredential(credential).await()
+                Result.success(result.user!!)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -158,13 +165,16 @@ object AuthRepository {
     fun cerrarSesion() = auth.signOut()
 
     fun traducirError(msg: String?): String = when {
-        msg == null                                  -> "Error desconocido"
-        "email address is already in use"   in msg   -> "Este correo ya está registrado"
-        "password is invalid"               in msg   -> "Contraseña incorrecta"
-        "no user record"                    in msg   -> "No existe una cuenta con este correo"
-        "badly formatted"                   in msg   -> "El correo no tiene un formato válido"
-        "network error"                     in msg   -> "Sin conexión a internet"
-        "weak-password"                     in msg   -> "La contraseña debe tener al menos 6 caracteres"
-        else                                         -> "Error: $msg"
+        msg == null                                       -> "Error desconocido"
+        "email address is already in use"       in msg   -> "Este correo ya está registrado"
+        "password is invalid"                   in msg   -> "Contraseña incorrecta"
+        "no user record"                        in msg   -> "No existe una cuenta con este correo"
+        "badly formatted"                       in msg   -> "El correo no tiene un formato válido"
+        "network error"                         in msg   -> "Sin conexión a internet"
+        "weak-password"                         in msg   -> "La contraseña debe tener al menos 6 caracteres"
+        "auth credential is incorrect"          in msg   -> "Correo o contraseña incorrectos"
+        "malformed or has expired"              in msg   -> "Correo o contraseña incorrectos"
+        "INVALID_LOGIN_CREDENTIALS"             in msg   -> "Correo o contraseña incorrectos"
+        else                                             -> "Error: $msg"
     }
 }

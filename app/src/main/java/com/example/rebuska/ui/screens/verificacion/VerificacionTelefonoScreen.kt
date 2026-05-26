@@ -37,14 +37,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rebuska.R
 import com.example.rebuska.ui.theme.*
-import com.example.rebuska.viewmodel.CelularVerificacionState
-import com.example.rebuska.viewmodel.VerificacionCelularViewModel
+import com.example.rebuska.viewmodel.TelefonoVerificacionState
+import com.example.rebuska.viewmodel.VerificacionTelefonoViewModel
 
 @Composable
 fun VerificacionTelefonoScreen(
     telefono: String = "3001234567",
     onVerificado: () -> Unit = {},
-    viewModel: VerificacionCelularViewModel = viewModel()
+    viewModel: VerificacionTelefonoViewModel = viewModel()
 ) {
     val context  = LocalContext.current
     val activity = context as Activity
@@ -58,7 +58,7 @@ fun VerificacionTelefonoScreen(
     val timerLabel = "${segundos}s"
     val timerPct   = segundos / 60f
 
-    val cargando = estado is CelularVerificacionState.Cargando
+    val cargando = estado is TelefonoVerificacionState.Cargando
 
     // Formatea el número con prefijo colombiano
     val telefonoFormateado = remember(telefono) {
@@ -66,18 +66,22 @@ fun VerificacionTelefonoScreen(
         when {
             limpio.startsWith("57") && limpio.length == 12 -> "+$limpio"
             limpio.length == 10 -> "+57$limpio"
-            else -> "+$limpio"
+            else -> {
+                android.util.Log.e("OTP_TEL", "Formato inesperado raw='$telefono' limpio='$limpio'")
+                "+57$limpio"
+            }
         }
     }
 
     // Enviar SMS automáticamente al entrar
     LaunchedEffect(Unit) {
+        android.util.Log.d("OTP_TEL", "Enviando a: $telefonoFormateado")
         viewModel.enviarSMS(telefonoFormateado, activity)
     }
 
     // Navegar cuando Firebase confirme el código
     LaunchedEffect(estado) {
-        if (estado is CelularVerificacionState.Verificado) onVerificado()
+        if (estado is TelefonoVerificacionState.Verificado) onVerificado()
     }
 
     val contentAlpha  = remember { Animatable(0f) }
@@ -164,7 +168,7 @@ fun VerificacionTelefonoScreen(
 
                 // ── Feedback de estado ────────────────────────
                 when (val s = estado) {
-                    is CelularVerificacionState.Cargando -> {
+                    is TelefonoVerificacionState.Cargando -> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center,
@@ -175,7 +179,7 @@ fun VerificacionTelefonoScreen(
                             Text("Enviando SMS...", fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = TextMuted)
                         }
                     }
-                    is CelularVerificacionState.SmsSent -> {
+                    is TelefonoVerificacionState.SmsSent -> {
                         Text(
                             "📱 SMS enviado — revisa tus mensajes",
                             fontFamily = Nunito, fontWeight = FontWeight.SemiBold,
@@ -183,7 +187,7 @@ fun VerificacionTelefonoScreen(
                             modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center
                         )
                     }
-                    is CelularVerificacionState.Error -> {
+                    is TelefonoVerificacionState.Error -> {
                         Text(
                             "❌ ${s.mensaje}",
                             fontFamily = Nunito, fontWeight = FontWeight.SemiBold,

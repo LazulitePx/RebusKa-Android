@@ -33,6 +33,7 @@ import com.google.firebase.ktx.Firebase
 import com.example.rebuska.ui.viewmodel.NegocioViewModel
 import com.example.rebuska.ui.screens.negocio.NegocioFormScreen
 import com.example.rebuska.ui.screens.publicacion.PublicacionFormScreen
+import java.net.URLEncoder
 
 object Rutas {
     const val SPLASH                = "splash"
@@ -40,24 +41,24 @@ object Rutas {
     const val REGISTRO_ROL          = "registro_rol"
     const val REGISTRO_1            = "registro_1"
     const val REGISTRO_2            = "registro_2"
-    const val VERIFICACION_EMAIL    = "verificacion_email/{telefono}"
+
+    const val VERIFICACION_EMAIL = "verificacion_email/{email}/{telefono}"
     const val VERIFICACION_TELEFONO = "verificacion_telefono/{telefono}"
     const val HOME                  = "home"
     const val TIENDA                = "tienda/{idNegocio}"
     const val MENSAJES              = "mensajes"
-    const val CHAT = "chat/{chatId}/{nombreContacto}/{logoUrl}/{esCliente}"
+    const val CHAT                  = "chat/{chatId}/{nombreContacto}/{logoUrl}/{esCliente}"
     const val PERFIL                = "perfil"
-    const val NEGOCIO = "negocio/{id}"
-    const val CREAR_PUBLICACION = "crear_publicacion/{idNegocio}"
-    const val NOTIFICACIONES = "notificaciones"
+    const val NEGOCIO               = "negocio/{id}"
+    const val CREAR_PUBLICACION     = "crear_publicacion/{idNegocio}"
+    const val NOTIFICACIONES        = "notificaciones"
 
+    fun verificacionEmailRuta(email: String, telefono: String) =
+        "verificacion_email/${URLEncoder.encode(email, "UTF-8")}/${URLEncoder.encode(telefono, "UTF-8")}"
 
-
-
-    fun verificacionEmailRuta(telefono: String)    = "verificacion_email/$telefono"
     fun verificacionTelefonoRuta(telefono: String) = "verificacion_telefono/$telefono"
-    fun tiendaRuta(id: String)  = "tienda/$id"
-    fun negocioRuta(id: String) = "negocio/$id"
+    fun tiendaRuta(id: String)          = "tienda/$id"
+    fun negocioRuta(id: String)         = "negocio/$id"
     fun crearPublicacionRuta(idNegocio: String) = "crear_publicacion/$idNegocio"
 }
 
@@ -74,7 +75,6 @@ fun AppNavigation(
         composable(Rutas.SPLASH) {
             SplashScreen(
                 onSplashFinished = {
-                    // Siempre va al HOME — el HOME decide si hay sesión
                     navController.navigate(Rutas.HOME) {
                         popUpTo(Rutas.SPLASH) { inclusive = true }
                     }
@@ -88,13 +88,10 @@ fun AppNavigation(
             HomeScreen(
                 onVerTienda = { id -> navController.navigate(Rutas.tiendaRuta(id)) },
                 onLogin = {
-                    if (!haySesion) {
-                        navController.navigate(Rutas.LOGIN)
-                    }
-                    // si hay sesión el botón no hace nada
+                    if (!haySesion) navController.navigate(Rutas.LOGIN)
                 },
-                onChats  = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil = { navController.navigate(Rutas.PERFIL) },
+                onChats          = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil         = { navController.navigate(Rutas.PERFIL) },
                 onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) }
             )
         }
@@ -170,7 +167,7 @@ fun AppNavigation(
 
             LaunchedEffect(exitoso) {
                 if (exitoso) {
-                    navController.navigate(Rutas.verificacionEmailRuta(viewModel.telefono)) {
+                    navController.navigate(Rutas.verificacionEmailRuta(viewModel.email, viewModel.telefono)) {
                         popUpTo(Rutas.REGISTRO_ROL) { inclusive = true }
                     }
                 }
@@ -192,14 +189,28 @@ fun AppNavigation(
 
         // ── VERIFICACIÓN EMAIL ────────────────────────────
         composable(
-            route     = Rutas.VERIFICACION_EMAIL,
-            arguments = listOf(navArgument("telefono") { type = NavType.StringType })
+            route = Rutas.VERIFICACION_EMAIL,
+            arguments = listOf(
+                navArgument("email")    { type = NavType.StringType },
+                navArgument("telefono") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-            val telefono = backStackEntry.arguments?.getString("telefono") ?: ""
+
+            val email = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("email") ?: "", "UTF-8"
+            )
+            val telefono = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("telefono") ?: "", "UTF-8"
+            )
+
             VerificacionEmailScreen(
-                onVerificar = {
-                    navController.navigate(Rutas.verificacionTelefonoRuta(telefono))
-                }
+                email = email,
+                onVerificadoCorrectamente = {
+                    navController.navigate(
+                        Rutas.verificacionTelefonoRuta(telefono)
+                    )
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -234,12 +245,12 @@ fun AppNavigation(
                             java.net.URLEncoder.encode(nombre, "UTF-8")
                         }/${
                             java.net.URLEncoder.encode(logo, "UTF-8")
-                        }/true"  // ← siempre true porque quien contacta es siempre el cliente
+                        }/true"
                     )
                 },
-                onHome      = { navController.navigate(Rutas.HOME) },
-                onChats     = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil    = { navController.navigate(Rutas.PERFIL) }
+                onHome   = { navController.navigate(Rutas.HOME) },
+                onChats  = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil = { navController.navigate(Rutas.PERFIL) }
             )
         }
 
@@ -252,10 +263,10 @@ fun AppNavigation(
         composable(
             route = Rutas.CHAT,
             arguments = listOf(
-                navArgument("chatId") { type = NavType.StringType },
+                navArgument("chatId")         { type = NavType.StringType },
                 navArgument("nombreContacto") { type = NavType.StringType },
-                navArgument("logoUrl") { type = NavType.StringType },
-                navArgument("esCliente") { type = NavType.BoolType }
+                navArgument("logoUrl")        { type = NavType.StringType },
+                navArgument("esCliente")      { type = NavType.BoolType   }
             )
         ) { backStackEntry ->
             val chatId         = backStackEntry.arguments?.getString("chatId") ?: ""
@@ -288,11 +299,13 @@ fun AppNavigation(
             val negocioId = backStackEntry.arguments?.getString("id") ?: ""
             ProfileScreenEdit(navController, negocioId)
         }
+
         composable("negocioForm") {
             val viewModel: NegocioViewModel = viewModel()
             NegocioFormScreen(viewModel, onBack = { navController.popBackStack() })
         }
 
+        // ── NOTIFICACIONES ────────────────────────────────
         composable(Rutas.NOTIFICACIONES) {
             NotificacionesScreen(
                 onBack = { navController.popBackStack() },
@@ -307,7 +320,8 @@ fun AppNavigation(
                 }
             )
         }
-        // ── PUBLICACION ───────────────────────────────────────
+
+        // ── PUBLICACIÓN ───────────────────────────────────
         composable(
             route = Rutas.CREAR_PUBLICACION,
             arguments = listOf(navArgument("idNegocio") { type = NavType.StringType })
@@ -315,12 +329,8 @@ fun AppNavigation(
             val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: ""
             PublicacionFormScreen(
                 idNegocio = idNegocio,
-                onBack = { navController.popBackStack() }
+                onBack    = { navController.popBackStack() }
             )
         }
-
     }
-
-
-
 }

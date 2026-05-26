@@ -9,18 +9,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-sealed class CelularVerificacionState {
-    object Idle       : CelularVerificacionState()
-    object Cargando   : CelularVerificacionState()
-    object SmsSent    : CelularVerificacionState()
-    object Verificado : CelularVerificacionState()
-    data class Error(val mensaje: String) : CelularVerificacionState()
+sealed class TelefonoVerificacionState {
+    object Idle       : TelefonoVerificacionState()
+    object Cargando   : TelefonoVerificacionState()
+    object SmsSent    : TelefonoVerificacionState()
+    object Verificado : TelefonoVerificacionState()
+    data class Error(val mensaje: String) : TelefonoVerificacionState()
 }
 
-class VerificacionCelularViewModel : ViewModel() {
+class VerificacionTelefonoViewModel : ViewModel() {
 
-    private val _estado = MutableStateFlow<CelularVerificacionState>(CelularVerificacionState.Idle)
-    val estado: StateFlow<CelularVerificacionState> = _estado
+    private val _estado = MutableStateFlow<TelefonoVerificacionState>(TelefonoVerificacionState.Idle)
+    val estado: StateFlow<TelefonoVerificacionState> = _estado
 
     private val _segundos = MutableStateFlow(60)
     val segundos: StateFlow<Int> = _segundos
@@ -29,31 +29,43 @@ class VerificacionCelularViewModel : ViewModel() {
     private var verificationId: String = ""
 
     fun enviarSMS(telefono: String, activity: Activity) {
-        _estado.value = CelularVerificacionState.Cargando
+        // Guard: valida E.164 antes de llamar a Firebase
+        if (!telefono.matches(Regex("^\\+[1-9]\\d{7,14}$"))) {
+            _estado.value = TelefonoVerificacionState.Error(
+                "Número inválido: $telefono"
+            )
+            return
+        }
+
+        _estado.value = TelefonoVerificacionState.Cargando
         AuthRepository.iniciarVerificacionTelefono(
-            telefono  = telefono,  // "+573001234567"
-            activity  = activity,
-            onCodeSent = { id ->
+            telefono     = telefono,
+            activity     = activity,
+            onCodeSent   = { id ->
                 verificationId = id
-                _estado.value = CelularVerificacionState.SmsSent
+                _estado.value = TelefonoVerificacionState.SmsSent
                 iniciarContador()
             },
+            onVerificado = {
+                _estado.value = TelefonoVerificacionState.Verificado
+            },
             onError = { e ->
-                _estado.value = CelularVerificacionState.Error(
+                _estado.value = TelefonoVerificacionState.Error(
                     e.message ?: "Error al enviar el SMS"
                 )
             }
         )
     }
 
+
     fun verificarCodigo(codigo: String) {
         viewModelScope.launch {
-            _estado.value = CelularVerificacionState.Cargando
+            _estado.value = TelefonoVerificacionState.Cargando
             val result = AuthRepository.verificarCodigoSMS(verificationId, codigo)
             _estado.value = if (result.isSuccess) {
-                CelularVerificacionState.Verificado
+                TelefonoVerificacionState.Verificado
             } else {
-                CelularVerificacionState.Error(
+                TelefonoVerificacionState.Error(
                     result.exceptionOrNull()?.message ?: "Código incorrecto"
                 )
             }
