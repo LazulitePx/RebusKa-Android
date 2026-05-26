@@ -5,6 +5,7 @@ import com.example.rebuska.data.remote.FirestoreService
 import com.example.rebuska.data.remote.StorageService
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.firestore.FirebaseFirestore
 
 object NegocioRepository {
 
@@ -58,4 +59,16 @@ object NegocioRepository {
 
     suspend fun eliminarNegocio(id: String): Result<Unit> =
         FirestoreService.eliminarNegocio(id)
+
+    //  recibe el id del negocio y la nueva descripcion
+    fun actualizarDescripcionNegocio(id: String, nuevaDescripcion: String): Result<Unit> {
+        return runCatching {
+            val db = FirebaseFirestore.getInstance()
+            val negocioRef = db.collection("negocios").document(id)
+
+            negocioRef.update("descripcion", nuevaDescripcion)
+                .addOnSuccessListener { println("✅ Descripción actualizada") }
+                .addOnFailureListener { e -> println("❌ Error al actualizar descripción: ${e.message}") }
+        }
+    }
 }

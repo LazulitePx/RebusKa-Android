@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.rebuska.ui.screens.HomeScreen
+import com.example.rebuska.ui.screens.NotificacionesScreen
 import com.example.rebuska.ui.screens.SplashScreen
 import com.example.rebuska.ui.screens.TiendaScreen
 import com.example.rebuska.ui.screens.login.LoginScreen
@@ -31,6 +32,8 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.example.rebuska.ui.viewmodel.NegocioViewModel
 import com.example.rebuska.ui.screens.negocio.NegocioFormScreen
+import com.example.rebuska.ui.screens.publicacion.PublicacionFormScreen
+import java.net.URLEncoder
 
 object Rutas {
     const val SPLASH                = "splash"
@@ -38,19 +41,25 @@ object Rutas {
     const val REGISTRO_ROL          = "registro_rol"
     const val REGISTRO_1            = "registro_1"
     const val REGISTRO_2            = "registro_2"
-    const val VERIFICACION_EMAIL = "verificacion_email"
+
+    const val VERIFICACION_EMAIL = "verificacion_email/{email}/{telefono}"
     const val VERIFICACION_TELEFONO = "verificacion_telefono/{telefono}"
     const val HOME                  = "home"
     const val TIENDA                = "tienda/{idNegocio}"
     const val MENSAJES              = "mensajes"
-    const val CHAT                  = "chat/{chatId}"
+    const val CHAT                  = "chat/{chatId}/{nombreContacto}/{logoUrl}/{esCliente}"
     const val PERFIL                = "perfil"
-    const val NEGOCIO = "com/example/rebuska/ui/screens/negocio/{id}"
+    const val NEGOCIO               = "negocio/{id}"
+    const val CREAR_PUBLICACION     = "crear_publicacion/{idNegocio}"
+    const val NOTIFICACIONES        = "notificaciones"
 
-    fun verificacionEmailRuta() = "verificacion_email"
+    fun verificacionEmailRuta(email: String, telefono: String) =
+        "verificacion_email/${URLEncoder.encode(email, "UTF-8")}/${URLEncoder.encode(telefono, "UTF-8")}"
+
     fun verificacionTelefonoRuta(telefono: String) = "verificacion_telefono/$telefono"
-    fun tiendaRuta(id: String)  = "tienda/$id"
-    fun negocioRuta(id: String) = "negocio/$id"
+    fun tiendaRuta(id: String)          = "tienda/$id"
+    fun negocioRuta(id: String)         = "negocio/$id"
+    fun crearPublicacionRuta(idNegocio: String) = "crear_publicacion/$idNegocio"
 }
 
 @Composable
@@ -66,7 +75,6 @@ fun AppNavigation(
         composable(Rutas.SPLASH) {
             SplashScreen(
                 onSplashFinished = {
-                    // Siempre va al HOME — el HOME decide si hay sesión
                     navController.navigate(Rutas.HOME) {
                         popUpTo(Rutas.SPLASH) { inclusive = true }
                     }
@@ -80,13 +88,11 @@ fun AppNavigation(
             HomeScreen(
                 onVerTienda = { id -> navController.navigate(Rutas.tiendaRuta(id)) },
                 onLogin = {
-                    if (!haySesion) {
-                        navController.navigate(Rutas.LOGIN)
-                    }
-                    // si hay sesión el botón no hace nada
+                    if (!haySesion) navController.navigate(Rutas.LOGIN)
                 },
-                onChats  = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil = { navController.navigate(Rutas.PERFIL) }
+                onChats          = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil         = { navController.navigate(Rutas.PERFIL) },
+                onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) }
             )
         }
 
@@ -161,7 +167,7 @@ fun AppNavigation(
 
             LaunchedEffect(exitoso) {
                 if (exitoso) {
-                    navController.navigate(Rutas.verificacionEmailRuta()) {
+                    navController.navigate(Rutas.verificacionEmailRuta(viewModel.email, viewModel.telefono)) {
                         popUpTo(Rutas.REGISTRO_ROL) { inclusive = true }
                     }
                 }
@@ -182,32 +188,29 @@ fun AppNavigation(
         }
 
         // ── VERIFICACIÓN EMAIL ────────────────────────────
-        composable(Rutas.VERIFICACION_EMAIL) { backStackEntry ->
+        composable(
+            route = Rutas.VERIFICACION_EMAIL,
+            arguments = listOf(
+                navArgument("email")    { type = NavType.StringType },
+                navArgument("telefono") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
 
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(Rutas.REGISTRO_ROL)
-            }
-
-            val registroViewModel: RegistroViewModel =
-                viewModel(parentEntry)
-
-            val email = registroViewModel.email
-            val telefono = registroViewModel.telefono
+            val email = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("email") ?: "", "UTF-8"
+            )
+            val telefono = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("telefono") ?: "", "UTF-8"
+            )
 
             VerificacionEmailScreen(
-
                 email = email,
-
                 onVerificadoCorrectamente = {
-
                     navController.navigate(
                         Rutas.verificacionTelefonoRuta(telefono)
                     )
                 },
-
-                onBack = {
-                    navController.popBackStack()
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -236,10 +239,18 @@ fun AppNavigation(
             TiendaScreen(
                 idNegocio   = idNegocio,
                 onAtras     = { navController.popBackStack() },
-                onContratar = { chatId -> navController.navigate("chat/$chatId") },
-                onHome      = { navController.navigate(Rutas.HOME) },
-                onChats     = { navController.navigate(Rutas.MENSAJES) },
-                onPerfil    = { navController.navigate(Rutas.PERFIL) }
+                onContratar = { chatId, nombre, logo ->
+                    navController.navigate(
+                        "chat/$chatId/${
+                            java.net.URLEncoder.encode(nombre, "UTF-8")
+                        }/${
+                            java.net.URLEncoder.encode(logo, "UTF-8")
+                        }/true"
+                    )
+                },
+                onHome   = { navController.navigate(Rutas.HOME) },
+                onChats  = { navController.navigate(Rutas.MENSAJES) },
+                onPerfil = { navController.navigate(Rutas.PERFIL) }
             )
         }
 
@@ -250,11 +261,29 @@ fun AppNavigation(
 
         // ── CHAT ──────────────────────────────────────────
         composable(
-            route     = Rutas.CHAT,
-            arguments = listOf(navArgument("chatId") { type = NavType.StringType })
+            route = Rutas.CHAT,
+            arguments = listOf(
+                navArgument("chatId")         { type = NavType.StringType },
+                navArgument("nombreContacto") { type = NavType.StringType },
+                navArgument("logoUrl")        { type = NavType.StringType },
+                navArgument("esCliente")      { type = NavType.BoolType   }
+            )
         ) { backStackEntry ->
-            val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
-            ChatScreen(chatId = chatId, onBack = { navController.popBackStack() })
+            val chatId         = backStackEntry.arguments?.getString("chatId") ?: ""
+            val nombreContacto = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("nombreContacto") ?: "", "UTF-8"
+            )
+            val logoUrl   = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("logoUrl") ?: "", "UTF-8"
+            )
+            val esCliente = backStackEntry.arguments?.getBoolean("esCliente") ?: true
+            ChatScreen(
+                chatId         = chatId,
+                nombreContacto = nombreContacto,
+                logoUrl        = logoUrl,
+                esCliente      = esCliente,
+                onBack         = { navController.popBackStack() }
+            )
         }
 
         // ── PERFIL ────────────────────────────────────────
@@ -264,16 +293,44 @@ fun AppNavigation(
 
         // ── NEGOCIO ───────────────────────────────────────
         composable(
-            route     = Rutas.NEGOCIO,
+            route = Rutas.NEGOCIO,
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
             val negocioId = backStackEntry.arguments?.getString("id") ?: ""
-            ProfileScreenEdit(navController, negocioId.toIntOrNull() ?: 0)
+            ProfileScreenEdit(navController, negocioId)
         }
+
         composable("negocioForm") {
             val viewModel: NegocioViewModel = viewModel()
             NegocioFormScreen(viewModel, onBack = { navController.popBackStack() })
         }
-    }
 
+        // ── NOTIFICACIONES ────────────────────────────────
+        composable(Rutas.NOTIFICACIONES) {
+            NotificacionesScreen(
+                onBack = { navController.popBackStack() },
+                onVerChat = { chatId, nombre, logo, esCliente ->
+                    navController.navigate(
+                        "chat/$chatId/${
+                            java.net.URLEncoder.encode(nombre, "UTF-8")
+                        }/${
+                            java.net.URLEncoder.encode(logo, "UTF-8")
+                        }/$esCliente"
+                    )
+                }
+            )
+        }
+
+        // ── PUBLICACIÓN ───────────────────────────────────
+        composable(
+            route = Rutas.CREAR_PUBLICACION,
+            arguments = listOf(navArgument("idNegocio") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val idNegocio = backStackEntry.arguments?.getString("idNegocio") ?: ""
+            PublicacionFormScreen(
+                idNegocio = idNegocio,
+                onBack    = { navController.popBackStack() }
+            )
+        }
+    }
 }

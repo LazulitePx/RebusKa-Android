@@ -1,6 +1,7 @@
 package com.example.rebuska.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,6 +26,10 @@ fun ChatItem(
     chat: Chat,
     onClick: () -> Unit
 ) {
+    val uidActual = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    val esCliente = uidActual == chat.idUsuario1
+    val inicial = chat.nombreContacto.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -40,28 +46,76 @@ fun ChatItem(
                 .background(Color(0xFFE0E0E0), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                tint = Color.Gray
-            )
+            if (esCliente && chat.fotoUrl.isNotEmpty()) {
+                coil.compose.AsyncImage(
+                    model = chat.fotoUrl,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Text(
+                    text = inicial,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(10.dp))
 
-        // ── Nombre y último mensaje
+        // ── Nombre, mensaje y negocio
         Column(modifier = Modifier.weight(1f)) {
+
+            // Nombre contacto
             Text(
-                chat.nombreContacto,
-                fontWeight = if (chat.noLeidos > 0) FontWeight.ExtraBold else FontWeight.Bold
+                text = chat.nombreContacto,
+                fontWeight = if (chat.noLeidos > 0)
+                    FontWeight.ExtraBold
+                else
+                    FontWeight.Bold
             )
+
+            // Último mensaje
             Text(
-                chat.ultimoMensaje,
+                text = chat.ultimoMensaje,
                 fontSize = 12.sp,
-                color = if (chat.noLeidos > 0) Color(0xFF1976D2) else Color.Gray,
-                fontWeight = if (chat.noLeidos > 0) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (chat.noLeidos > 0)
+                    Color(0xFF1976D2)
+                else
+                    Color.Gray,
+                fontWeight = if (chat.noLeidos > 0)
+                    FontWeight.SemiBold
+                else
+                    FontWeight.Normal,
                 maxLines = 1
             )
+
+            // Etiqueta negocio
+            if (!esCliente && chat.nombreNegocio.isNotEmpty()) {
+
+                Box(
+                    modifier = Modifier
+                        .padding(top = 3.dp)
+                        .border(
+                            width = 0.7.dp,
+                            color = Color(0xFF1976D2),
+                            shape = RoundedCornerShape(50)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 1.dp)
+                ) {
+
+                    Text(
+                        text = chat.nombreNegocio,
+                        fontSize = 8.sp,
+                        color = Color(0xFF1976D2),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.width(8.dp))

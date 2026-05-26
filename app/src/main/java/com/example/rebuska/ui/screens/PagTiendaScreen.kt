@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import coil.compose.AsyncImage
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -39,7 +40,7 @@ import com.example.rebuska.viewmodel.ChatViewModel
 fun TiendaScreen(
     idNegocio: String = "",
     onAtras: () -> Unit = {},
-    onContratar: (chatId: String) -> Unit = {},
+    onContratar: (chatId: String, nombre: String, logo: String) -> Unit = { _, _, _ -> },
     onChats: () -> Unit = {},
     onPerfil: () -> Unit = {},
     onHome: () -> Unit = {},
@@ -74,8 +75,10 @@ fun TiendaScreen(
                             if (n != null) {
                                 chatViewModel.contactar(
                                     idTrabajador  = n.idTrabajador,
+                                    idNegocio     = n.id,
                                     nombreNegocio = n.nombre,
-                                    onChatListo   = { chatId -> onContratar(chatId) }
+                                    logoUrl       = n.logoUrl,
+                                    onChatListo   = { chatId -> onContratar(chatId, n.nombre, n.logoUrl) }
                                 )
                             }
                         },

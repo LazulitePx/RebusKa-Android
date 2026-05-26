@@ -5,7 +5,8 @@ import kotlinx.coroutines.tasks.await
 
 object OtpRepository {
 
-    private val functions = FirebaseFunctions.getInstance()
+    private val functions = FirebaseFunctions.getInstance("us-central1")
+
 
     suspend fun enviarOtp(
         email: String
@@ -26,6 +27,7 @@ object OtpRepository {
 
         } catch (e: Exception) {
 
+            android.util.Log.e("OTP", "Error enviando OTP: ${e.message}", e)
             Result.failure(e)
         }
     }

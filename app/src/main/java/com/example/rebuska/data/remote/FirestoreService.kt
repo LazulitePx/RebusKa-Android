@@ -143,65 +143,88 @@ object FirestoreService {
 
     suspend fun obtenerOCrearChat(
         idTrabajador: String,
-        nombreNegocio: String
+        idNegocio: String,
+        nombreNegocio: String,
+        logoUrl: String = ""
     ): Result<String> = runCatching {
         val idCliente = auth.currentUser?.uid ?: error("No hay sesión activa")
 
-        // Buscar si ya existe un chat entre estos dos
+        // Buscar si ya existe
         val existente = chatsCol
             .whereEqualTo("idUsuario1", idCliente)
-            .whereEqualTo("idUsuario2", idTrabajador)
+            .whereEqualTo("idNegocio", idNegocio)
             .get().await()
 
         if (!existente.isEmpty) {
             return@runCatching existente.documents.first().id
         }
 
+        // Obtener nombre del cliente desde Firestore
+        val clienteDoc = db.collection("usuarios").document(idCliente).get().await()
+        val nombreCliente = "${clienteDoc.getString("nombre") ?: ""} ${clienteDoc.getString("apellido") ?: ""}".trim()
+            .ifEmpty { "Cliente" }
+
         // Crear nuevo chat
         val ref = chatsCol.document()
         ref.set(mapOf(
-            "id"             to ref.id,
-            "idUsuario1"     to idCliente,
-            "idUsuario2"     to idTrabajador,
-            "nombreContacto" to nombreNegocio,
-            "ultimoMensaje"  to "",
-            "timestamp"      to System.currentTimeMillis(),
-            "noLeidos"       to 0
+            "id"                 to ref.id,
+            "idUsuario1"         to idCliente,
+            "idUsuario2"         to idTrabajador,
+            "idNegocio"          to idNegocio,
+            "nombreParaUsuario1" to nombreNegocio,
+            "nombreParaUsuario2" to nombreCliente,
+            "logoUrl"            to logoUrl,
+            "ultimoMensaje"      to "",
+            "timestamp"          to System.currentTimeMillis(),
+            "noLeidosUsuario1"   to 0,
+            "noLeidosUsuario2"   to 0
         )).await()
 
         ref.id
     }
 
-    suspend fun getChatsDelUsuario(): Result<List<Chat>> = runCatching {
-        val uid = auth.currentUser?.uid ?: error("No hay sesión activa")
+        suspend fun getChatsDelUsuario(): Result<List<Chat>> = runCatching {
+            val uid = auth.currentUser?.uid ?: error("No hay sesión activa")
 
-        val comoCliente    = chatsCol.whereEqualTo("idUsuario1", uid).get().await()
-        val comoTrabajador = chatsCol.whereEqualTo("idUsuario2", uid).get().await()
+            val comoCliente    = chatsCol.whereEqualTo("idUsuario1", uid).get().await()
+            val comoTrabajador = chatsCol.whereEqualTo("idUsuario2", uid).get().await()
 
-        val todos = (comoCliente.documents + comoTrabajador.documents)
-            .distinctBy { it.id }
-            .mapNotNull { doc ->
-                val idUsuario1 = doc.getString("idUsuario1") ?: ""
-                // Leer el campo de no leidos correcto segun el usuario actual
-                val noLeidos = if (uid == idUsuario1)
-                    doc.getLong("noLeidosUsuario1")?.toInt() ?: 0
-                else
-                    doc.getLong("noLeidosUsuario2")?.toInt() ?: 0
+            val todos = (comoCliente.documents + comoTrabajador.documents)
+                .distinctBy { it.id }
+                .mapNotNull { doc ->
+                    val idUsuario1 = doc.getString("idUsuario1") ?: ""
+                    val esUsuario1 = uid == idUsuario1
 
-                Chat(
-                    id             = doc.id,
-                    idUsuario1     = idUsuario1,
-                    idUsuario2     = doc.getString("idUsuario2") ?: "",
-                    nombreContacto = doc.getString("nombreContacto") ?: "",
-                    ultimoMensaje  = doc.getString("ultimoMensaje") ?: "",
-                    timestamp      = doc.getLong("timestamp") ?: 0L,
-                    noLeidos       = noLeidos
-                )
-            }
-            .sortedByDescending { it.timestamp }
+                    val noLeidos = if (esUsuario1)
+                        doc.getLong("noLeidosUsuario1")?.toInt() ?: 0
+                    else
+                        doc.getLong("noLeidosUsuario2")?.toInt() ?: 0
 
-        todos
-    }
+                    // Mostrar el nombre correcto según quién es
+                    val nombreContacto = if (esUsuario1)
+                        doc.getString("nombreParaUsuario1") ?: ""
+                    else
+                        doc.getString("nombreParaUsuario2") ?: ""
+
+                    val nombreNegocio = doc.getString("nombreParaUsuario1") ?: ""
+
+
+                    Chat(
+                        id             = doc.id,
+                        idUsuario1     = idUsuario1,
+                        idUsuario2     = doc.getString("idUsuario2") ?: "",
+                        nombreContacto = nombreContacto,
+                        nombreNegocio  = nombreNegocio,
+                        ultimoMensaje  = doc.getString("ultimoMensaje") ?: "",
+                        timestamp      = doc.getLong("timestamp") ?: 0L,
+                        noLeidos       = noLeidos,
+                        fotoUrl = doc.getString("logoUrl") ?: ""
+                    )
+                }
+                .sortedByDescending { it.timestamp }
+
+            todos
+        }
 
     fun escucharMensajes(
         chatId: String,

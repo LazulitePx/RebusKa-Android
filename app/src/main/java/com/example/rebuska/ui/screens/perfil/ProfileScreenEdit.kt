@@ -1,114 +1,65 @@
 package com.example.rebuska.ui.screens.perfil
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.example.rebuska.R
+import coil.compose.rememberAsyncImagePainter
+import com.example.rebuska.data.model.Negocio
+import com.example.rebuska.data.repository.NegocioRepository
 import com.example.rebuska.navigation.Rutas
 import com.example.rebuska.ui.components.BottomNavBar
 import com.example.rebuska.ui.components.NavDestino
-
-
-// data class para vista (provisional)
-data class EmpresaDisplay(
-    val nombre: String,
-    val valoracion: Double,
-    val resenas: Int,
-    val logo: Int
-)
-
-data class PublicacionDisplay(
-    val id: Int,
-    val titulo: String,
-    val tiempoPublicacion: String,
-    val descripcion: String,
-    val imagen: Int
-)
+import com.example.rebuska.ui.screens.publicacion.PublicacionDisplay
+import com.example.rebuska.viewmodel.PublicacionViewModel
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun ProfileScreenEdit(navController: NavHostController, empresaId: Int) {
-    // datos de la empresa
-    val empresaInfo = EmpresaDisplay(
-        nombre = "Carpintería López",
-        valoracion = 4.7,
-        resenas = 128,
-        logo = R.drawable.logo_carpinteria
-    )
+fun ProfileScreenEdit(navController: NavHostController, empresaId: String) {
+    val viewModel: PublicacionViewModel = viewModel()
 
-    val publicacionesLista = remember { mutableStateListOf(
-        PublicacionDisplay(
-            id = 1,
-            titulo = "Muebles a medida",
-            tiempoPublicacion = "2 días",
-            descripcion = "Diseño y fabricación de muebles personalizados para sala, comedor y alcoba. Madera de primera calidad con acabados finos.",
-            imagen = R.drawable.muebles_medida
-        ),
-        PublicacionDisplay(
-            id = 2,
-            titulo = "Instalación de puertas y ventanas",
-            tiempoPublicacion = "1 semana",
-            descripcion = "Instalación profesional de puertas y ventanas de madera. Incluye ajuste y garantía de 6 meses.",
-            imagen = R.drawable.instalacion_puerta
-        )
-    )}
+    val negocioState = remember { mutableStateOf<Negocio?>(null) }
+    val cargando = remember { mutableStateOf(true) }
+
+    LaunchedEffect(empresaId) {
+        val result = NegocioRepository.getNegocioById(empresaId)
+        result.onSuccess {
+            negocioState.value = it
+        }.onFailure {
+            println("❌ Error al cargar negocio: ${it.message}")
+        }
+        cargando.value = false
+    }
+
+    LaunchedEffect(empresaId) {
+        viewModel.cargarPublicaciones(empresaId)
+    }
+
     Scaffold(
         bottomBar = {
             BottomNavBar(
                 seleccionado = NavDestino.PERFIL,
-                onHome   = { navController.navigate(Rutas.HOME) },
-                onChats  = { navController.navigate(Rutas.MENSAJES) },
+                onHome = { navController.navigate(Rutas.HOME) },
+                onChats = { navController.navigate(Rutas.MENSAJES) },
                 onPerfil = { navController.navigate(Rutas.PERFIL) },
-                onMenu   = { /* acción menú */ },
-                onLogo   = { navController.navigate(Rutas.HOME) }
+                onMenu = { /* acción menú */ },
+                onLogo = { navController.navigate(Rutas.HOME) }
             )
         }
     ) { innerPadding ->
@@ -117,168 +68,252 @@ fun ProfileScreenEdit(navController: NavHostController, empresaId: Int) {
                 .fillMaxSize()
                 .background(Color(0xFFE8E9EA))
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState()) // para scroll si el contenido es muy amplio
+                .verticalScroll(rememberScrollState())
         ) {
-            // encabezado especifico para la pantalla de edicion de empresa
-            EmpresaEncabezado(
-                nombre = empresaInfo.nombre,
-                valoracion = empresaInfo.valoracion,
-                reseñas = empresaInfo.resenas,
-                imagenRes = empresaInfo.logo,
-                onBackClick = { navController.popBackStack() },
-                onSettingsClick = { /* Acción de ajustes */ }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            //dexripcion
-            SeccionDescripcion(
-                descripcion = "Carpintería local con más de 20 años de experiencia, comprometidos en ofrecer los mejores productos de madera. Expertos en muebles a medida, puertas, ventanas y restauración.",
-                onEditClick = { /* Acción para editar descripción */ }
-            )
+            if (cargando.value) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF1976D2))
+                }
+            } else {
+                negocioState.value?.let { negocio ->
+                    EmpresaEncabezado(
+                        bannerUrl = negocio.bannerUrl,
+                        onBackClick = { navController.popBackStack() },
+                        onSettingsClick = { /* Acción ajustes */ }
+                    )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                    SeccionPerfilNegocio(
+                        nombre = negocio.nombre,
+                        valoracion = negocio.promCalificacion.toDouble(),
+                        reseñas = negocio.totalResenas,
+                        logoUrl = negocio.logoUrl,
+                        onEditPerfilClick = { /* Acción editar perfil */ }
+                    )
 
-            //seccion de publicaciones
+                    //  edicion de descripcion
+                    SeccionDescripcionEditable(
+                        negocioId = negocio.id,
+                        descripcion = negocio.descripcion ?: "Sin descripción disponible"
+                    )
+
+                } ?: run {
+                    Text(
+                        text = "No se encontró información del negocio.",
+                        modifier = Modifier.padding(16.dp),
+                        color = Color.Gray
+                    )
+                }
+            }
+
             SeccionMisPublicaciones(
-                publicaciones = publicacionesLista,
-                onNuevaPublicacionClick = { /* Acción para añadir nueva publicación */ },
-                onEditPublicacionClick = { publicacion -> /* Acción para editar publicación */ },
+                publicaciones = viewModel.publicaciones.map { publicacion ->
+                    PublicacionDisplay(
+                        id = publicacion.id,
+                        titulo = publicacion.titulo,
+                        tiempoPublicacion = "reciente",
+                        descripcion = publicacion.descripcion,
+                        imagenUrl = publicacion.fotoUrl
+                    )
+                },
+                onNuevaPublicacionClick = {
+                    navController.navigate(Rutas.crearPublicacionRuta(empresaId))
+                },
+                onEditPublicacionClick = { publicacion ->
+                    navController.navigate("editarPublicacion/${publicacion.id}")
+                },
                 onDeletePublicacionClick = { publicacion ->
-                    publicacionesLista.remove(publicacion)
-                    // aqui iria la logica para la base de datos
+                    viewModel.eliminarPublicacion(publicacion.id)
                 }
             )
         }
     }
 }
 
-
-// componentes internnos
-
 @Composable
 fun EmpresaEncabezado(
-    nombre: String,
-    valoracion: Double,
-    reseñas: Int,
-    imagenRes: Int,
+    bannerUrl: String?,
     onBackClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp)
-            .background(Color(0xFF1976D2))
+            .height(200.dp)
     ) {
-        // titulo
-        Text(
-            text = "Mi empresa",
-            color = Color.White,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
+        // Fondo con banner del negocio
+        bannerUrl?.let {
+            Image(
+                painter = rememberAsyncImagePainter(it),
+                contentDescription = "Banner del negocio",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } ?: Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 16.dp)
+                .fillMaxSize()
+                .background(Color(0xFF1976D2))
         )
 
-        // boton atras
-        Box(
+        // Botón atrás
+        IconButton(
+            onClick = onBackClick,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 16.dp, top = 16.dp)
+                .padding(16.dp)
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(Color(0x33FFFFFF))
-                .clickable { onBackClick() },
-            contentAlignment = Alignment.Center
+                .background(Color(0x33000000))
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Atrás",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
+                tint = Color.White
             )
         }
 
-        // boton ajustes
-        Box(
+        // Botón ajustes
+        IconButton(
+            onClick = onSettingsClick,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(end = 16.dp, top = 16.dp)
+                .padding(16.dp)
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(Color(0x33FFFFFF))
-                .clickable { onSettingsClick() },
-            contentAlignment = Alignment.Center
+                .background(Color(0x33000000))
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
                 contentDescription = "Ajustes",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
+                tint = Color.White
             )
         }
+    }
+}
 
-        // contenido central
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
+@Composable
+fun SeccionPerfilNegocio(
+    nombre: String,
+    valoracion: Double,
+    reseñas: Int,
+    logoUrl: String?,
+    onEditPerfilClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        // ───────── Fila principal: logo + información ─────────
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Image(
-                painter = painterResource(id = imagenRes),
-                contentDescription = "Logo de la empresa",
+            // Foto de perfil (logo)
+            logoUrl?.let {
+                Image(
+                    painter = rememberAsyncImagePainter(it),
+                    contentDescription = "Logo del negocio",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .border(3.dp, Color.White, CircleShape)
+                )
+            } ?: Box(
                 modifier = Modifier
-                    .size(90.dp)
+                    .size(100.dp)
                     .clip(CircleShape)
-                    .border(2.dp, Color.White, CircleShape),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = nombre,
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0x33FFFFFF))
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                    .background(Color(0xFFEEEEEE)),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = "Valoración",
-                    tint = Color(0xFFFFC107),
-                    modifier = Modifier.size(16.dp)
-                )
                 Text(
-                    text = "$valoracion",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(start = 4.dp)
+                    nombre.firstOrNull()?.uppercase() ?: "N",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1976D2)
                 )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Información del negocio (nombre, reseñas, botón)
+            Column(
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
-                    text = "· $reseñas reseñas",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(start = 8.dp)
+                    text = nombre,
+                    color = Color.Black,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(0xFFE8E9EA))
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "Valoración",
+                        tint = Color(0xFFFFC107),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "$valoracion",
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                    Text(
+                        text = "· $reseñas reseñas",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = onEditPerfilClick,
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
+                    elevation = ButtonDefaults.buttonElevation(2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Editar perfil",
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Editar perfil",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun SeccionDescripcion(
-    descripcion: String,
-    onEditClick: () -> Unit
+fun SeccionDescripcionEditable(
+    negocioId: String,
+    descripcion: String
 ) {
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var nuevaDescripcion by remember { mutableStateOf(descripcion) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -295,7 +330,7 @@ fun SeccionDescripcion(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Canvas(modifier = Modifier.size(8.dp)) {
-                        drawCircle(color = Color(0xFF1976D2)) // Punto azul
+                        drawCircle(color = Color(0xFF1976D2))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -304,29 +339,59 @@ fun SeccionDescripcion(
                         fontSize = 18.sp
                     )
                 }
-                TextButton(onClick = onEditClick) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(16.dp),
-                            tint = Color(0xFF1976D2)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Editar",
-                            color = Color(0xFF1976D2)
-                        )
-                    }
+                TextButton(onClick = { mostrarDialogo = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Editar",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color(0xFF1976D2)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Editar",
+                        color = Color(0xFF1976D2)
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = descripcion,
+                text = descripcion.ifEmpty { "Sin descripción disponible" },
                 fontSize = 14.sp,
-                lineHeight = 20.sp
+                lineHeight = 20.sp,
+                color = Color.DarkGray
             )
         }
+    }
+
+    // ───────── Diálogo para editar ─────────
+    if (mostrarDialogo) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogo = false },
+            title = { Text("Editar descripción") },
+            text = {
+                TextField(
+                    value = nuevaDescripcion,
+                    onValueChange = { nuevaDescripcion = it },
+                    label = { Text("Nueva descripción") }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    NegocioRepository.actualizarDescripcionNegocio(
+                        negocioId,
+                        nuevaDescripcion
+                    )
+                    mostrarDialogo = false
+                }) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogo = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 
@@ -342,6 +407,7 @@ fun SeccionMisPublicaciones(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
+        // Encabezado con botón "Nueva"
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -349,7 +415,7 @@ fun SeccionMisPublicaciones(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Canvas(modifier = Modifier.size(8.dp)) {
-                    drawCircle(color = Color(0xFF1976D2)) // Punto azul
+                    drawCircle(color = Color(0xFF1976D2))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -363,17 +429,15 @@ fun SeccionMisPublicaciones(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
                 shape = RoundedCornerShape(50)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = "Nueva",
-                    tint = Color.White
-                )
+                Icon(Icons.Filled.Add, contentDescription = "Nueva", tint = Color.White)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(text = "Nueva", color = Color.White)
+                Text("Nueva", color = Color.White)
             }
         }
+
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Lista de publicaciones
         publicaciones.forEach { publicacion ->
             Card(
                 modifier = Modifier
@@ -389,26 +453,22 @@ fun SeccionMisPublicaciones(
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Imagen desde Firebase Storage
                     Image(
-                        painter = painterResource(id = publicacion.imagen),
+                        painter = rememberAsyncImagePainter(publicacion.imagenUrl),
                         contentDescription = "Imagen de la publicación",
                         modifier = Modifier
                             .size(60.dp)
                             .clip(RoundedCornerShape(4.dp)),
-                        contentScale = ContentScale.Crop
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
                     )
+
                     Spacer(modifier = Modifier.width(16.dp))
+
+                    // Texto de la publicación
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = publicacion.titulo,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = "Publicado hace ${publicacion.tiempoPublicacion}",
-                            color = Color.Gray,
-                            fontSize = 12.sp
-                        )
+                        Text(publicacion.titulo, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                        Text("Publicado hace ${publicacion.tiempoPublicacion}", color = Color.Gray, fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = publicacion.descripcion,
@@ -417,12 +477,12 @@ fun SeccionMisPublicaciones(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
+
                     Spacer(modifier = Modifier.width(8.dp))
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        // icono de editar
+
+                    // Botones de acción
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Botón editar
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
@@ -431,15 +491,10 @@ fun SeccionMisPublicaciones(
                                 .clickable { onEditPublicacionClick(publicacion) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = "Editar publicación",
-                                modifier = Modifier.size(16.dp),
-                                tint = Color.White
-                            )
+                            Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = Color.White, modifier = Modifier.size(16.dp))
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                        // icono de eliminar
+                        // Botón eliminar
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
@@ -448,12 +503,7 @@ fun SeccionMisPublicaciones(
                                 .clickable { onDeletePublicacionClick(publicacion) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.Delete,
-                                contentDescription = "Eliminar publicación",
-                                modifier = Modifier.size(16.dp),
-                                tint = Color.White
-                            )
+                            Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = Color.White, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -466,5 +516,5 @@ fun SeccionMisPublicaciones(
 @Composable
 fun ProfileScreenEditPreview() {
     val navController = rememberNavController()
-    ProfileScreenEdit(navController, empresaId = 1)
+    ProfileScreenEdit(navController, empresaId = "1")
 }

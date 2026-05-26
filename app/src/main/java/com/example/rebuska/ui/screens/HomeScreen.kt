@@ -31,6 +31,9 @@ import com.example.rebuska.ui.theme.*
 import com.example.rebuska.viewmodel.HomeUiState
 import com.example.rebuska.viewmodel.HomeViewModel
 import coil.compose.AsyncImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.foundation.clickable
 
 data class Categoria(val emoji: String, val nombre: String)
 
@@ -50,14 +53,16 @@ fun HomeScreen(
     onPerfil: () -> Unit = {},
     onChats: () -> Unit = {},
     onLogin: () -> Unit = {},
+    onNotificaciones: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
-    var busqueda by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsState()
+    val busqueda by viewModel.busqueda.collectAsState()
+    val negocios by viewModel.negociosFiltrados.collectAsState()
+    val totalNoLeidos by viewModel.totalNoLeidos.collectAsState()
 
-    val negocios = when (val s = uiState) {
-        is HomeUiState.Exito -> s.negocios
-        else -> emptyList()
+    LaunchedEffect(Unit) {
+        viewModel.escucharNoLeidos()
     }
 
     Scaffold(
@@ -97,17 +102,32 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        // Campo de texto para realizar búsquedas de productos o servicios
                         OutlinedTextField(
                             value = busqueda,
-                            onValueChange = { busqueda = it },
+                            onValueChange = { viewModel.busqueda.value = it },
                             placeholder = {
                                 Text("Buscar producto o servicio...",
                                     fontFamily = Nunito, fontWeight = FontWeight.SemiBold,
                                     fontSize = 13.sp, color = Color(0xFFAAAAAA))
                             },
+                            // Icono para limpiar la búsqueda cuando hay texto escrito
                             leadingIcon = {
                                 Icon(painterResource(R.drawable.ic_search), null,
                                     tint = Color(0xFFAAAAAA), modifier = Modifier.size(18.dp))
+                            },
+                            trailingIcon = {
+                                // Solo se muestra si el usuario ha escrito algo
+                                if (busqueda.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.busqueda.value = "" }) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.Close,
+                                            contentDescription = "Limpiar búsqueda",
+                                            tint = Color(0xFFAAAAAA),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
                             },
                             singleLine = true,
                             modifier = Modifier.weight(1f).height(56.dp),
@@ -123,20 +143,28 @@ fun HomeScreen(
                         Box(contentAlignment = Alignment.TopEnd) {
                             Box(
                                 modifier = Modifier.size(40.dp).clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.18f)),
+                                    .background(Color.White.copy(alpha = 0.18f))
+                                    .clickable { onNotificaciones() },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(painterResource(R.drawable.ic_notifications), null,
                                     tint = Color.White, modifier = Modifier.size(20.dp))
                             }
-                            Box(
-                                modifier = Modifier.size(16.dp).clip(CircleShape)
-                                    .background(Color(0xFFE53935))
-                                    .offset(x = 2.dp, y = (-2).dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("3", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 8.sp, color = Color.White)
+                            if (totalNoLeidos > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFE53935))
+                                        .offset(x = 2.dp, y = (-2).dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        if (totalNoLeidos > 9) "9+" else "$totalNoLeidos",
+                                        fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 8.sp, color = Color.White
+                                    )
+                                }
                             }
                         }
                     }

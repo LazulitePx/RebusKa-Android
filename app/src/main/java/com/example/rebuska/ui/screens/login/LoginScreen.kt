@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -295,23 +296,58 @@ fun LoginScreen(
                 Button(
                     onClick = { onLoginExitoso(email, password) },
                     enabled = !cargando,
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50.dp),
+                    shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Blue800),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-                    Text(
-                        text = "Continuar",
-                        fontFamily = Nunito,
-                        fontWeight = FontWeight.Companion.ExtraBold,
-                        fontSize = 15.sp,
-                        color = Color.Companion.White
-                    )
+                    if (cargando) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Continuar",
+                            fontFamily = Nunito,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 15.sp,
+                            color = Color.White
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.Companion.height(20.dp))
+                if (errorMsg != null) {
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFFFEBEE))
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_info),
+                            contentDescription = null,
+                            tint = Color(0xFFE53935),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = errorMsg,
+                            fontFamily = Nunito,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = Color(0xFFE53935)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // Divisor
                 Row(

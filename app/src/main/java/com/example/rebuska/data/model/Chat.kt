@@ -5,6 +5,7 @@ data class Chat(
     val idUsuario1: String = "",
     val idUsuario2: String = "",
     val nombreContacto: String = "",
+    val nombreNegocio: String = "",
     val ultimoMensaje: String = "",
     val timestamp: Long = 0L,
     val noLeidos: Int = 0,

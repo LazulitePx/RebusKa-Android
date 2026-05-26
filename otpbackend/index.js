@@ -1,146 +1,78 @@
-const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { Resend } = require("resend");
 
 admin.initializeApp();
-
 const db = admin.firestore();
-
 const resend = new Resend("re_SW2mvojM_CzfqQtNUvzbkG7xw8923NiJa");
 
-// Función enviar código OTP al correo
-exports.enviarOtpCorreo = functions.https.onCall(
-  async (data, context) => {
-
-    const email = data.email;
+// ── Enviar OTP ──────────────────────────────────────
+exports.enviarOtpCorreo = onCall(async (request) => {
+    const email = request.data.email;
+    console.log("EMAIL RECIBIDO:", email);
 
     if (!email) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Email requerido"
-      );
+        throw new HttpsError("invalid-argument", "Email requerido");
     }
 
-    // Generar OTP
-    const codigo = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
-
-    // Expira en 5 minutos
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
     const expira = Date.now() + 5 * 60 * 1000;
 
-    // Guardar OTP en Firestore
-    await db.collection("email_otps")
-      .doc(email)
-      .set({
+    await db.collection("email_otps").doc(email).set({
         codigo,
         expira,
         creado: Date.now()
-      });
-
-    // Enviar correo
-    await resend.emails.send({
-      from: "Rebuska <onboarding@resend.dev>",
-      to: email,
-      subject: "Código de verificación",
-      html: `
-        <div style="font-family: Arial">
-
-          <h2>Verifica tu correo</h2>
-
-          <p>Tu código OTP es:</p>
-
-          <div style="
-            font-size: 32px;
-            font-weight: bold;
-            letter-spacing: 8px;
-            color: #1D4ED8;
-          ">
-            ${codigo}
-          </div>
-
-          <p>
-            Este código expira en 5 minutos.
-          </p>
-
-        </div>
-      `
     });
 
-    return {
-      success: true
-    };
-  }
-)
+    await resend.emails.send({
+        from: "Rebuska <noreply@rebuska.online>",
+        to: email,
+        subject: "Código de verificación",
+        html: `
+            <div style="font-family: Arial">
+                <h2>Verifica tu correo</h2>
+                <p>Tu código de verificación es:</p>
+                <div style="font-size: 32px; font-weight: bold;
+                            letter-spacing: 8px; color: #1D4ED8;">
+                    ${codigo}
+                </div>
+                <p>Ingresa este código en la App.</p>
+                <p>Este código expira en 5 minutos.</p>
+            </div>
+        `
+    });
 
-// Función verificar código OTP
-exports.verificarOtpCorreo = functions.https.onCall(
-  async (data, context) => {
+    return { success: true };
+});
 
-    const email = data.email;
-    const codigo = data.codigo;
+// ── Verificar OTP ───────────────────────────────────
+exports.verificarOtpCorreo = onCall(async (request) => {
+    const email  = request.data.email;
+    const codigo = request.data.codigo;
 
-    // Validaciones
     if (!email || !codigo) {
-
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Datos incompletos"
-      );
+        throw new HttpsError("invalid-argument", "Datos incompletos");
     }
 
-    // Buscar OTP
-    const doc = await db
-      .collection("email_otps")
-      .doc(email)
-      .get();
+    const doc = await db.collection("email_otps").doc(email).get();
 
-    // No existe
     if (!doc.exists) {
-
-      throw new functions.https.HttpsError(
-        "not-found",
-        "Código no encontrado"
-      );
+        throw new HttpsError("not-found", "Código no encontrado");
     }
 
     const otpData = doc.data();
 
-    // Expirado
     if (Date.now() > otpData.expira) {
-
-      throw new functions.https.HttpsError(
-        "deadline-exceeded",
-        "Código expirado"
-      );
+        throw new HttpsError("deadline-exceeded", "Código expirado");
     }
 
-    // Incorrecto
     if (otpData.codigo !== codigo) {
-
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Código incorrecto"
-      );
+        throw new HttpsError("invalid-argument", "Código incorrecto");
     }
 
-    // Buscar usuario Firebase Auth
     const user = await admin.auth().getUserByEmail(email);
+    await admin.auth().updateUser(user.uid, { emailVerified: true });
+    await db.collection("email_otps").doc(email).delete();
 
-    // Marcar correo como verificado
-    await admin.auth().updateUser(user.uid, {
-      emailVerified: true,
-    });
-
-    // Eliminar OTP usado
-    await db.collection("email_otps")
-      .doc(email)
-      .delete();
-
-    return {
-      success: true,
-    };
-  }
-);
-
-;
+    return { success: true };
+});

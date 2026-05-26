@@ -63,7 +63,6 @@ import com.example.rebuska.ui.theme.GoldLight
 import com.example.rebuska.ui.theme.Nunito
 import com.example.rebuska.ui.theme.TextMuted
 import com.example.rebuska.ui.theme.TextPrimary
-import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rebuska.viewmodel.EmailVerificacionState
@@ -76,75 +75,48 @@ fun VerificacionEmailScreen(
     onVerificadoCorrectamente: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
-
-    var codigo by remember { mutableStateOf("") }
+    var codigo      by remember { mutableStateOf("") }
     var codigoError by remember { mutableStateOf("") }
-
     val digitCount = 6
 
+    LaunchedEffect(email) {
+        if (email.isNotBlank()) {
+            viewModel.enviarEmail(email)
+        }
+    }
+
     // Estado del ViewModel
-    val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val estado   by viewModel.estado.collectAsStateWithLifecycle()
+    val segundosExpiracion by viewModel.segundosExpiracion.collectAsState()
+    val segundosReenvio    by viewModel.segundosReenvio.collectAsState()
+
+    // Navegar al verificarse correctamente
     LaunchedEffect(estado) {
-
         if (estado is EmailVerificacionState.Verificado) {
-
             onVerificadoCorrectamente()
         }
     }
 
-    // Loading
     val cargando = estado is EmailVerificacionState.Cargando
+    val errorMsg = (estado as? EmailVerificacionState.Error)?.mensaje
 
-    // Mensaje de error
-    val errorMsg = when (estado) {
+    val minutos    = segundosExpiracion / 60
+    val segsDisplay = segundosExpiracion % 60
+    val timerLabel = "$minutos:${segsDisplay.toString().padStart(2, '0')}"
+    val timerPct   = segundosExpiracion / 300f
 
-        is EmailVerificacionState.Error -> {
-            (estado as EmailVerificacionState.Error).mensaje
-        }
-
-        else -> null
-    }
-
-    // Si el código fue verificado
-    LaunchedEffect(estado) {
-
-        if (estado is EmailVerificacionState.Verificado) {
-
-            onVerificadoCorrectamente()
-        }
-    }
-
-    // Timer desde ViewModel
-    val segundos by viewModel.segundos.collectAsState()
-
-    val minutos = segundos / 60
-    val segsDisplay = segundos % 60
-
-    val timerLabel =
-        "$minutos:${segsDisplay.toString().padStart(2, '0')}"
-
-    val timerPct = segundos / 300f
-
-    // Animaciones
-    val contentAlpha = remember { Animatable(0f) }
+    // Animaciones de entrada
+    val contentAlpha  = remember { Animatable(0f) }
     val contentOffset = remember { Animatable(30f) }
 
     LaunchedEffect(Unit) {
-
-        contentAlpha.animateTo(
-            1f,
-            animationSpec = tween(600)
-        )
-
-        contentOffset.animateTo(
-            0f,
-            animationSpec = tween(600)
-        )
+        contentAlpha.animateTo(1f, animationSpec = tween(600))
+        contentOffset.animateTo(0f, animationSpec = tween(600))
     }
 
-    Box(modifier = Modifier.Companion.fillMaxSize().background(Color.Companion.White)) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer { alpha = contentAlpha.value; translationY = contentOffset.value }
         ) {
@@ -153,47 +125,36 @@ fun VerificacionEmailScreen(
             // HEADER CON OLA
             // ══════════════════════════════════════════
             Box(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)
                     .drawBehind {
                         val path = Path().apply {
                             moveTo(0f, size.height * 0.8f)
-                            quadraticBezierTo(
-                                size.width * 0.25f,
-                                size.height,
-                                size.width * 0.5f,
-                                size.height * 0.85f
-                            )
-                            quadraticBezierTo(
-                                size.width * 0.75f,
-                                size.height * 0.7f,
-                                size.width,
-                                size.height * 0.85f
-                            )
+                            quadraticBezierTo(size.width * 0.25f, size.height, size.width * 0.5f, size.height * 0.85f)
+                            quadraticBezierTo(size.width * 0.75f, size.height * 0.7f, size.width, size.height * 0.85f)
                             lineTo(size.width, 0f); lineTo(0f, 0f); close()
                         }
-                        drawPath(
-                            path, brush = Brush.Companion.linearGradient(
-                                colors = listOf(Blue800, Blue700, Blue400),
-                                start = Offset(0f, 0f), end = Offset(size.width, size.height)
-                            )
-                        )
+                        drawPath(path, brush = Brush.linearGradient(
+                            colors = listOf(Blue800, Blue700, Blue400),
+                            start  = Offset(0f, 0f),
+                            end    = Offset(size.width, size.height)
+                        ))
                     }
             ) {
                 Box(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .padding(start = 16.dp, top = 44.dp)
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color.Companion.White.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Companion.Center
+                        .background(Color.White.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back),
                         contentDescription = "Atrás",
-                        tint = Color.Companion.White,
-                        modifier = Modifier.Companion.size(18.dp)
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -202,295 +163,174 @@ fun VerificacionEmailScreen(
             // CONTENIDO
             // ══════════════════════════════════════════
             Column(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Companion.White)
+                    .background(Color.White)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp)
             ) {
-                Spacer(modifier = Modifier.Companion.height(24.dp))
+                Spacer(Modifier.height(24.dp))
 
-                Text(
-                    "Verifica tu", fontFamily = Nunito, fontWeight = FontWeight.Companion.ExtraBold,
-                    fontSize = 26.sp, color = TextPrimary
-                )
-                Text(
-                    "Correo electrónico",
-                    fontFamily = Nunito,
-                    fontWeight = FontWeight.Companion.ExtraBold,
-                    fontSize = 24.sp,
-                    color = Blue800,
-                    fontStyle = FontStyle.Companion.Italic
-                )
+                Text("Verifica tu", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, color = TextPrimary)
+                Text("Correo electrónico", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, color = Blue800, fontStyle = FontStyle.Italic)
 
-                Spacer(modifier = Modifier.Companion.height(12.dp))
+                Spacer(Modifier.height(12.dp))
 
-                Text(
-                    text = "Enviamos un código de 6 dígitos a",
-                    fontFamily = Nunito, fontWeight = FontWeight.Companion.SemiBold,
-                    fontSize = 13.sp, color = TextMuted
-                )
-                Text(
-                    text = email,
-                    fontFamily = Nunito, fontWeight = FontWeight.Companion.ExtraBold,
-                    fontSize = 13.sp, color = Blue800
-                )
-                Text(
-                    text = "No olvides revisar en tu carpeta de spam.",
-                    fontFamily = Nunito, fontWeight = FontWeight.Companion.SemiBold,
-                    fontSize = 12.sp, color = TextMuted
-                )
+                Text("Enviamos un código de 6 dígitos a", fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextMuted)
+                Text(email, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = Blue800)
+                Text("No olvides revisar en tu carpeta de spam.", fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = TextMuted)
 
-                Spacer(modifier = Modifier.Companion.height(24.dp))
+                Spacer(Modifier.height(24.dp))
 
-                Text(
-                    "Código de verificación",
-                    fontFamily = Nunito,
-                    fontWeight = FontWeight.Companion.ExtraBold,
-                    fontSize = 14.sp,
-                    color = TextPrimary
-                )
+                Text("Código de verificación", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = TextPrimary)
 
-                Spacer(modifier = Modifier.Companion.height(16.dp))
+                Spacer(Modifier.height(16.dp))
 
-                // Código 6 dígitos
                 OtpField(
                     value = codigo,
                     digitCount = digitCount,
                     onValueChange = {
-
                         if (it.all { char -> char.isDigit() } && it.length <= digitCount) {
-
                             codigo = it
                             codigoError = ""
-
                         }
                     }
                 )
 
                 if (codigoError.isNotEmpty()) {
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = codigoError,
-                        color = Color.Red,
-                        fontFamily = Nunito,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(codigoError, color = Color.Red, fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
 
                 if (errorMsg != null) {
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = errorMsg,
-                        color = Color.Red,
-                        fontFamily = Nunito,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(errorMsg, color = Color.Red, fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
 
-                Spacer(modifier = Modifier.Companion.height(20.dp))
+                Spacer(Modifier.height(20.dp))
 
                 // Timer
                 Row(
-                    verticalAlignment = Alignment.Companion.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.Companion.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     TimerCircle(label = timerLabel, progress = timerPct)
-                    Spacer(modifier = Modifier.Companion.width(10.dp))
-                    Text(
-                        text = "El código expira en ",
-                        fontFamily = Nunito, fontWeight = FontWeight.Companion.SemiBold,
-                        fontSize = 13.sp, color = TextMuted
-                    )
-                    Text(
-                        text = timerLabel,
-                        fontFamily = Nunito, fontWeight = FontWeight.Companion.ExtraBold,
-                        fontSize = 13.sp, color = TextPrimary
-                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text("El código expira en ", fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextMuted)
+                    Text(timerLabel, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = TextPrimary)
                 }
 
-                Spacer(modifier = Modifier.Companion.height(14.dp))
+                Spacer(Modifier.height(14.dp))
 
                 // Reenviar
                 Row(
                     horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.Companion.CenterVertically,
-                    modifier = Modifier.Companion.fillMaxWidth()
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        "¿No lo recibiste? ",
-                        fontFamily = Nunito,
-                        fontWeight = FontWeight.Companion.SemiBold,
-                        fontSize = 13.sp,
-                        color = TextMuted
-                    )
+                    Text("¿No lo recibiste? ", fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextMuted)
                     TextButton(
-                        onClick = {
-
-                            viewModel.reenviarCodigo(email)
-                        },
-                        contentPadding = PaddingValues(0.dp)
+                        onClick = { viewModel.reenviarCodigo(email) },
+                        contentPadding = PaddingValues(0.dp),
+                        enabled = segundosReenvio == 0 && !cargando
                     ) {
                         Text(
-                            "Reenviar código",
-                            fontFamily = Nunito,
-                            fontWeight = FontWeight.Companion.ExtraBold,
+                            if (segundosReenvio > 0) "Reenviar en ${segundosReenvio}s" else "Reenviar código",
+                            fontFamily = Nunito, fontWeight = FontWeight.ExtraBold,
                             fontSize = 13.sp,
-                            color = Blue800
+                            color = if (segundosReenvio > 0) TextMuted else Blue800
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.Companion.height(16.dp))
+                Spacer(Modifier.height(16.dp))
 
                 // Disclaimer
                 Row(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
                         .background(GoldLight)
-                        .border(
-                            1.5.dp,
-                            GoldBorder,
-                            androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
-                        )
+                        .border(1.5.dp, GoldBorder, RoundedCornerShape(14.dp))
                         .padding(12.dp),
-                    verticalAlignment = Alignment.Companion.Top
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_info),
-                        contentDescription = null, tint = Gold,
-                        modifier = Modifier.Companion.size(18.dp).padding(top = 1.dp)
-                    )
-                    Spacer(modifier = Modifier.Companion.width(10.dp))
+                    Icon(painterResource(R.drawable.ic_info), null, tint = Gold, modifier = Modifier.size(18.dp).padding(top = 1.dp))
+                    Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "Este código es de un solo uso. Nunca compartas este código con nadie.",
-                        fontFamily = Nunito, fontWeight = FontWeight.Companion.SemiBold,
+                        "Este código es de un solo uso. Nunca compartas este código con nadie.",
+                        fontFamily = Nunito, fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp, color = Color(0xFF7A6000), lineHeight = 18.sp
                     )
                 }
 
-                Spacer(modifier = Modifier.Companion.weight(1f))
-                Spacer(modifier = Modifier.Companion.height(28.dp))
+                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(28.dp))
 
                 Button(
                     onClick = {
-
                         when {
-
-                            codigo.isBlank() -> {
-                                codigoError = "Ingresa el código"
-                            }
-
-                            codigo.length != 6 -> {
-                                codigoError = "El código debe tener 6 dígitos"
-                            }
-
+                            codigo.isBlank()       -> codigoError = "Ingresa el código"
+                            codigo.length != 6     -> codigoError = "El código debe tener 6 dígitos"
                             else -> {
-
                                 codigoError = ""
-
-                                viewModel.verificarCodigo(
-                                    email = email,
-                                    codigo = codigo
-                                )
+                                viewModel.verificarCodigo(email = email, codigo = codigo)
                             }
                         }
                     },
-                    enabled = !cargando,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Blue800
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 4.dp
-                    )
+                    enabled  = !cargando,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape    = RoundedCornerShape(50.dp),
+                    colors   = ButtonDefaults.buttonColors(containerColor = Blue800),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-
                     if (cargando) {
-
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(22.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-
+                        CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp)
                     } else {
-
-                        Text(
-                            "Verificar correo",
-                            fontFamily = Nunito,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 15.sp,
-                            color = Color.White
-                        )
+                        Text("Verificar correo", fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = Color.White)
                     }
                 }
 
-                Spacer(modifier = Modifier.Companion.height(24.dp))
+                Spacer(Modifier.height(24.dp))
             }
         }
     }
 }
 
-// ── Componente OTP reutilizable ───────────────────────
+// ── Componente OTP ────────────────────────────────────
 @Composable
-fun OtpField(
-    value: String,
-    digitCount: Int,
-    onValueChange: (String) -> Unit
-) {
+fun OtpField(value: String, digitCount: Int, onValueChange: (String) -> Unit) {
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.NumberPassword),
-        textStyle = TextStyle(color = Color.Companion.Transparent),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        textStyle = TextStyle(color = Color.Transparent),
         decorationBox = {
             Row(
-                modifier = Modifier.Companion.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    10.dp,
-                    Alignment.Companion.CenterHorizontally
-                )
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
             ) {
                 repeat(digitCount) { index ->
-                    val char = value.getOrNull(index)
+                    val char  = value.getOrNull(index)
                     val focus = index == value.length
-
-                    Box(
-                        modifier = Modifier.Companion
-                            .size(40.dp, 54.dp),
-                        contentAlignment = Alignment.Companion.Center
-                    ) {
+                    Box(modifier = Modifier.size(40.dp, 54.dp), contentAlignment = Alignment.Center) {
                         Box(
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .matchParentSize()
-                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                                .background(
-                                    if (focus || char != null) BlueLight
-                                    else Color(0xFFF8FAFF)
-                                )
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (focus || char != null) BlueLight else Color(0xFFF8FAFF))
                                 .border(
                                     width = if (focus) 2.dp else 1.5.dp,
                                     color = if (focus || char != null) Blue800 else BlueBorder,
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(12.dp)
                                 ),
-                            contentAlignment = Alignment.Companion.Center
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = char?.toString() ?: "—",
                                 fontFamily = Nunito,
-                                fontWeight = FontWeight.Companion.ExtraBold,
+                                fontWeight = FontWeight.ExtraBold,
                                 fontSize = if (char != null) 20.sp else 16.sp,
                                 color = if (char != null) Blue800 else Color(0xFFBBCCEE)
                             )
@@ -505,33 +345,20 @@ fun OtpField(
 // ── Timer circular ────────────────────────────────────
 @Composable
 fun TimerCircle(label: String, progress: Float) {
-    Box(
-        modifier = Modifier.Companion.size(36.dp),
-        contentAlignment = Alignment.Companion.Center
-    ) {
+    Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(
-            progress = { progress },
-            modifier = Modifier.Companion.fillMaxSize(),
-            color = Blue800,
+            progress  = { progress },
+            modifier  = Modifier.fillMaxSize(),
+            color     = Blue800,
             trackColor = BlueBorder,
             strokeWidth = 3.dp
         )
-        Text(
-            text = label,
-            fontFamily = Nunito,
-            fontWeight = FontWeight.Companion.ExtraBold,
-            fontSize = 8.sp,
-            color = Blue800,
-            textAlign = TextAlign.Companion.Center
-        )
+        Text(label, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 8.sp, color = Blue800, textAlign = TextAlign.Center)
     }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun VerificacionEmailPreview() {
-
-    VerificacionEmailScreen(
-        email = "test@correo.com"
-    )
+    VerificacionEmailScreen(email = "test@correo.com")
 }

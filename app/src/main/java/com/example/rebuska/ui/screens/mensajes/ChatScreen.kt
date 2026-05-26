@@ -30,11 +30,23 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 @Composable
 fun ChatScreen(
     chatId: String,
+    nombreContacto: String = "",
+    logoUrl: String = "",
+    esCliente: Boolean = true,
     onBack: () -> Unit,
     viewModel: ChatViewModel = viewModel()
 ) {
     val mensajes by viewModel.mensajes.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
+    val nombreMostrar by viewModel.nombreContacto.collectAsState()
+    val nombre = nombreMostrar.ifEmpty { nombreContacto }
+    val logoFresco by viewModel.logoUrl.collectAsState()
+    val datosListos by viewModel.datosListos.collectAsState()
+    val logoMostrar = when {
+        !esCliente -> ""                          // trabajador → siempre iniciales
+        logoFresco.isNotEmpty() -> logoFresco     // cliente con logo fresco del VM
+        else -> logoUrl                           // cliente con logo del parámetro mientras carga
+    }
     val listState = rememberLazyListState()
     var texto by remember { mutableStateOf("") }
 
@@ -46,6 +58,14 @@ fun ChatScreen(
         if (mensajes.isNotEmpty()) {
             listState.animateScrollToItem(mensajes.size - 1)
         }
+    }
+
+    LaunchedEffect(logoUrl) {
+        android.util.Log.d("CHAT_DEBUG", "logoUrl recibido: '$logoUrl'")
+    }
+
+    LaunchedEffect(Unit) {
+        android.util.Log.d("CHAT_DEBUG2", "logoUrl después de decode: '$logoUrl'")
     }
 
     Column(
@@ -74,15 +94,40 @@ fun ChatScreen(
             Box(
                 modifier = Modifier
                     .size(42.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.3f)),
+                    .clip(CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text("💬", fontSize = 20.sp)
+                // Si soy usuario1 (cliente) veo el logo de la tienda
+                // Si soy usuario2 (trabajador) veo las iniciales del cliente
+                if (logoMostrar.isNotEmpty()) {
+                    coil.compose.AsyncImage(
+                        model = logoMostrar,
+                        contentDescription = null,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.size(42.dp).clip(CircleShape)
+                    )
+                } else {
+                    // Iniciales del contacto
+                    val inicial = nombre.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(inicial, fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
             Spacer(Modifier.width(10.dp))
-            Text("Chat", color = Color.White, fontSize = 18.sp,
-                fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text(
+                text = nombre,
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
         }
 
         // ── Mensajes
@@ -144,7 +189,7 @@ fun ChatScreen(
 
 @Composable
 fun MensajeBurbuja(mensaje: Mensaje, esMio: Boolean) {
-    val hora = SimpleDateFormat("h:mm a", Locale.getDefault())
+    val hora = SimpleDateFormat("dd/MM/yyyy h:mm a", Locale.getDefault())
         .format(Date(mensaje.timestamp))
 
     Column(
